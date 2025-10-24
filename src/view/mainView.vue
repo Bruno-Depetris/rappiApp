@@ -126,29 +126,31 @@ export default {
           }
         ];
         
-        // si ANDARA se mueve acaDAW
         try {
+          
           const usuarioId = localStorage.getItem('usuarioId');
           if (usuarioId) {
             const usuario = await UsuarioService.getById(usuarioId);
             this.usuarioLogueado = usuario.nombre;
             
-            this.carrito = await CarritoService.getCarritoByUsuario(usuarioId);
+            this.carrito = await CarritoService.getById(usuarioId);
+            
             if (this.carrito) {
               this.carritoItems = await CarritoService.getItemsByCarrito(this.carrito.id);
             }
           }
           
-          const productosReales = await ProductoService.getProductosPopulares(8);
+
+          const productosReales = await ProductoService.getAll();
+          
           if (productosReales && productosReales.length > 0) {
             this.productos = productosReales;
           }
-          
           this.categorias = await CategoriaService.getCategoriasActivas();
           
         } catch (apiError) {
           
-          Notificar.error('SI LEES ESTO mauri rompio la api xd',10)
+          Notificar.error('SI LEES ESTO mauri rompio la api en alguna parte xd',10)
           Notificar.error('por eso ves esos datos WASAAA',10)
         }
         
