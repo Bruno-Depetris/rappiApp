@@ -1,12 +1,11 @@
-<script setup>
-// import HelloWorld from './components/HelloWorld.vue'
-import mainView from './view/mainView.vue';
-</script>
-
+<!-- App.vue -->
 <template>
-  <mainView/>
-  <!-- <HelloWorld msg="Vite + Vue" /> -->
+  <router-view />
 </template>
+
+<script setup>
+// no hace falta importar MainView ni Perfil aquí
+</script>
 
 <style scoped>
 </style>
