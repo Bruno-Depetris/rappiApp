@@ -90,8 +90,7 @@ export default {
   },
   async mounted() {
     //esto estaria bueno crear en utils las notificaciones esta que sea mas simple
-   
-
+    // YA LO HICE
     await this.inicializarDatos();
   },
   methods: {
@@ -127,7 +126,7 @@ export default {
           }
         ];
         
-        // si ANDARA se mueve aca
+        // si ANDARA se mueve acaDAW
         try {
           const usuarioId = localStorage.getItem('usuarioId');
           if (usuarioId) {
@@ -148,14 +147,9 @@ export default {
           this.categorias = await CategoriaService.getCategoriasActivas();
           
         } catch (apiError) {
-          console.log('API no disponible, usando datos de prueba porque mauri rompe todo:', apiError.message);
-          // Mostrar notificación de modo offline
-          if (this.notyf) {
-            this.notyf.open({
-              type: 'warning',
-              message: '⚠️ Modo demo - API no disponible'
-            });
-          }
+          
+          Notificar.error('SI LEES ESTO mauri rompio la api xd',10)
+          Notificar.error('por eso ves esos datos WASAAA',10)
         }
         
       } catch (error) {
@@ -166,12 +160,7 @@ export default {
       } finally {
         this.loading = false;
         
-        // Notificación de bienvenida
-        if (this.notyf && this.productos.length > 0) {
-          setTimeout(() => {
-            this.notyf.success('🍕 ¡Bienvenido a Rappi! Disfruta nuestros productos');
-          }, 1000);
-        }
+        Notificar.exito('BIENVENIDO A RAPPI :)')
       }
     },
 
