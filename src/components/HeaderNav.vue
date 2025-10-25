@@ -66,8 +66,7 @@ export default {
 
 <style scoped>
 .navbar {
-  background-color: #ff6600; /* fondo naranja */
-  border-bottom: 1px solid #e65c00;
+  background-color: #ff66007d; /* fondo naranja */
 }
 
 .navbar-brand {
