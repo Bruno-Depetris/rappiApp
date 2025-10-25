@@ -106,39 +106,31 @@ export default {
         productos.value = [
           { id: 1, nombre: "CARGANDO...", precio: 0, imagen: "https://via.placeholder.com/150" }
         ];
-
-        const usuarioId = localStorage.getItem('usuarioId');
-        if (usuarioId) {
-          const usuario = await UsuarioService.getById(usuarioId);
-          usuarioLogueado.value = usuario.nombre;
-
-          carrito.value = await CarritoService.getCarritoByUsuario(usuarioId);
-          if (carrito.value) {
-            carritoItems.value = await CarritoService.getItemsByCarrito(carrito.value.id);
+        
+        // si ANDARA se mueve acaDAW
+        try {
+          const usuarioId = localStorage.getItem('usuarioId');
+          if (usuarioId) {
+            const usuario = await UsuarioService.getById(usuarioId);
+            this.usuarioLogueado = usuario.nombre;
+            
+            this.carrito = await CarritoService.getCarritoByUsuario(usuarioId);
+            if (this.carrito) {
+              this.carritoItems = await CarritoService.getItemsByCarrito(this.carrito.id);
+            }
           }
-        }
-
-        // Traer productos reales
-        const productosReales = await ProductoService.getProductosPopulares(8);
-        if (productosReales && productosReales.length > 0) {
-          productos.value = productosReales.map(p => ({
-            id: p.productoId,
-            nombre: p.nombre,
-            precio: p.precio,
-            descripcion: p.descripcion,
-            disponibilidad: p.disponibilidad,
-            imagen: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : 'https://via.placeholder.com/150'
-          }));
-        }
-
-        // Traer categorías reales
-        const categoriasReales = await CategoriaService.getCategoriasActivas();
-        if (categoriasReales && categoriasReales.length > 0) {
-          categorias.value = categoriasReales.map(c => ({
-            id: c.categoriaId,
-            nombre: c.nombre,
-            imagen: c.imagen || 'https://via.placeholder.com/100'
-          }));
+          
+          const productosReales = await ProductoService.getProductosPopulares(8);
+          if (productosReales && productosReales.length > 0) {
+            this.productos = productosReales;
+          }
+          
+          this.categorias = await CategoriaService.getCategoriasActivas();
+          
+        } catch (apiError) {
+          
+          Notificar.error('SI LEES ESTO mauri rompio la api xd',10)
+          Notificar.error('por eso ves esos datos WASAAA',10)
         }
 
       } catch (error) {
