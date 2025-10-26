@@ -52,14 +52,23 @@
       </div>
     </div>
   </div>
+
+  <ProductModal
+    :producto="productoSeleccionado"
+    v-model:visible="modalVisible"
+  />
 </template>
 
 <script>
 import { ref, computed, onMounted } from 'vue';
 import HeaderNav from '../components/HeaderNav.vue';
 import ProductCard from '../components/ProductCard.vue';
+import ProductModal from '../components/ProductModal.vue';
+
 import { UsuarioService, ProductoService, CarritoService, CategoriaService } from '../../private/services';
+
 import { Notificar } from "../utils/notificaciones";
+
 import hamburguesaImg from '../assets/hamburguesa.png';
 import pizzaImg from '../assets/pizza.png';
 import gaseosaImg from '../assets/gaseosa.png';
@@ -71,24 +80,23 @@ export default {
   name: 'MainView',
   components: { HeaderNav, ProductCard },
   setup() {
-    // ⚡️ States
     const usuarioLogueado = ref(null);
     const productos = ref([]);
     const categorias = ref([
-      { id: 1, nombre: "Hamburguesas", imagen: hamburguesaImg, icono: '🍔' },
-      { id: 2, nombre: "Pizzas", imagen: pizzaImg, icono: '🍕' },
-      { id: 3, nombre: "Bebidas", imagen: gaseosaImg, icono: '🥤' },
-      { id: 4, nombre: "Postres", imagen: heladoImg, icono: '🍰' },
-      { id: 5, nombre: "Ensaladas", imagen: ensaladaImg, icono: '🥗' },
-      { id: 6, nombre: "Promos", imagen: promo, icono: '🎉' }
+      { id: 1, nombre: "Hamburguesas", imagen: hamburguesaImg },
+      { id: 2, nombre: "Pizzas", imagen: pizzaImg },
+      { id: 3, nombre: "Bebidas", imagen: gaseosaImg },
+      { id: 4, nombre: "Postres", imagen: heladoImg },
+      { id: 5, nombre: "Ensaladas", imagen: ensaladaImg },
+      { id: 6, nombre: "Promos", imagen: promo }
     ]);
     const carrito = ref(null);
     const carritoItems = ref([]);
     const carritoVisible = ref(false);
     const loading = ref(true);
     const categoriaSeleccionada = ref(null);
+    const terminoBusqueda = ref('');
 
-    // ⚡️ Computed
     const carritoCount = computed(() => 
       carritoItems.value.reduce((total, item) => total + item.cantidad, 0)
     );
@@ -97,48 +105,40 @@ export default {
       carritoItems.value.reduce((total, item) => total + item.precio * item.cantidad, 0)
     );
 
-    // ⚡️ Methods
     const inicializarDatos = async () => {
       loading.value = true;
+      productos.value = [{ id: 1, nombre: "CARGANDO...", precio: 0, imagen: "https://via.placeholder.com/150" }];
 
       try {
-        // Datos de prueba mientras carga la API
-        productos.value = [
-          { id: 1, nombre: "CARGANDO...", precio: 0, imagen: "https://via.placeholder.com/150" }
-        ];
-        
-        // si ANDARA se mueve acaDAW
-        try {
-          const usuarioId = localStorage.getItem('usuarioId');
-          if (usuarioId) {
-            const usuario = await UsuarioService.getById(usuarioId);
-            this.usuarioLogueado = usuario.nombre;
-            
-            this.carrito = await CarritoService.getCarritoByUsuario(usuarioId);
-            if (this.carrito) {
-              this.carritoItems = await CarritoService.getItemsByCarrito(this.carrito.id);
-            }
+        const usuarioId = localStorage.getItem('usuarioId');
+        if (usuarioId) {
+          const usuario = await UsuarioService.getById(usuarioId);
+          usuarioLogueado.value = usuario.nombre;
+
+          carrito.value = await CarritoService.getCarritoByUsuario(usuarioId);
+          if (carrito.value) {
+            carritoItems.value = await CarritoService.getItemsByCarrito(carrito.value.id);
           }
-          
-          const productosReales = await ProductoService.getProductosPopulares(8);
-          if (productosReales && productosReales.length > 0) {
-            this.productos = productosReales;
-          }
-          
-          this.categorias = await CategoriaService.getCategoriasActivas();
-          
-        } catch (apiError) {
-          
-          Notificar.error('SI LEES ESTO mauri rompio la api xd',10)
-          Notificar.error('por eso ves esos datos WASAAA',10)
         }
+        //REVISAR ESTE ENDPOINT. DEBERIA SER EL DE getProductosPopulares
+        const productosPopulares = await ProductoService.obtenerTodos();
+        productos.value = productosPopulares.map(p => ({
+          id: p.productoId,
+          nombre: p.nombre,
+          precio: p.precio,
+          descripcion: p.descripcion,
+          disponibilidad: p.disponibilidad,
+          imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
+        }));
+
+        const categoriasActivas = await CategoriaService.getCategoriasActivas();
+        if (categoriasActivas) categorias.value = categoriasActivas;
 
       } catch (error) {
         console.error('Error al cargar datos:', error);
         Notificar.error('❌ Error al cargar los datos');
       } finally {
         loading.value = false;
-        Notificar.exito('BIENVENIDO A RAPPI :)');
       }
     };
 
@@ -154,7 +154,7 @@ export default {
             precio: p.precio,
             descripcion: p.descripcion,
             disponibilidad: p.disponibilidad,
-            imagen: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : 'https://via.placeholder.com/150'
+            imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
           }));
         } catch {
           Notificar.error('No se pudieron cargar los productos de la categoría');
@@ -190,23 +190,37 @@ export default {
           });
         }
 
-        Notificar.exito('Producto agregado correctamente', 123);
-
         const usuarioId = localStorage.getItem('usuarioId');
         if (usuarioId) {
-          if (!carrito.value) {
-            carrito.value = await CarritoService.crearCarritoParaUsuario(usuarioId);
-          }
+          if (!carrito.value) carrito.value = await CarritoService.crearCarritoParaUsuario(usuarioId);
           await CarritoService.agregarItemAlCarrito(carrito.value.id, producto.id, 1);
           carritoItems.value = await CarritoService.getItemsByCarrito(carrito.value.id);
-          Notificar.exito('API funcionando', 10);
         }
+
+        Notificar.exito('Producto agregado correctamente', 3);
+
       } catch (error) {
-        Notificar.error('Error al cargar producto al carro', 10);
+        Notificar.error('Error al cargar producto al carrito', 3);
       }
     };
 
-    // ⚡️ Lifecycle
+    const buscarProductos = async () => {
+      if (!terminoBusqueda.value) return inicializarDatos();
+      try {
+        const resultados = await ProductoService.buscarProductos(terminoBusqueda.value);
+        productos.value = resultados.map(p => ({
+          id: p.productoId,
+          nombre: p.nombre,
+          precio: p.precio,
+          descripcion: p.descripcion,
+          disponibilidad: p.disponibilidad,
+          imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
+        }));
+      } catch {
+        Notificar.error('No se pudieron buscar los productos');
+      }
+    };
+
     onMounted(() => {
       inicializarDatos();
     });
@@ -222,16 +236,17 @@ export default {
       categoriaSeleccionada,
       carritoCount,
       carritoTotal,
+      terminoBusqueda,
       inicializarDatos,
       seleccionarCategoria,
       toggleCarrito,
       verProducto,
-      agregarAlCarrito
+      agregarAlCarrito,
+      buscarProductos
     };
   }
 };
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');

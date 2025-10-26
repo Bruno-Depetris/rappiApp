@@ -1,4 +1,4 @@
-const API_BASE = "https://rapi-api-rest-production.up.railway.app/api";
+export const API_BASE = "https://rapi-api-rest-production.up.railway.app/api";
 
 export async function get(endpoint) {
   const res = await fetch(`${API_BASE}/${endpoint}`);

@@ -1,30 +1,50 @@
 <template>
-  <div class="card-producto-container" @mouseenter="flipCard" @mouseleave="flipCard" :class="{ 'flipped': isFlipped }">
-    
+  <div 
+    class="card-producto-container" 
+    @mouseenter="flipCard" 
+    @mouseleave="flipCard" 
+    :class="{ 'flipped': isFlipped }"
+  >
+    <!-- Cara frontal -->
     <div class="card-face card-front shadow-sm">
       
-      <img :src="producto.imagen || placeholder" :alt="producto.nombre" class="card-img-top">
+      <!-- Imagen o placeholder -->
+      <div v-if="producto.imagen" class="card-image-wrapper">
+        <img :src="producto.imagen" :alt="producto.nombre" class="card-img-top" />
+      </div>
+      <div v-else class="card-placeholder d-flex justify-content-center align-items-center">
+        <i class="bi bi-basket-fill card-placeholder-icon"></i>
+      </div>
 
+      <!-- Contenido principal -->
       <div class="card-body text-center">
         <h5 class="card-title">{{ producto.nombre }}</h5>
         <p class="card-text precio">$ {{ producto.precio.toFixed(2) }}</p>
       </div>
-      
+
+      <!-- Botón agregar -->
       <div class="card-footer d-flex justify-content-center">
-        <button class="btn btn-warning btn-sm fw-bold text-white" @click.stop="$emit('agregar', producto)">
+        <button 
+          class="btn btn-warning btn-sm fw-bold text-white" 
+          @click.stop="$emit('agregar', producto)"
+        >
           <i class="bi bi-cart-plus me-1"></i>Agregar
         </button>
       </div>
-      
     </div>
 
+    <!-- Cara trasera -->
     <div class="card-face card-back d-flex flex-column justify-content-center align-items-center p-3 shadow-sm">
-        <h5 class="card-title">Descripción</h5>
-        <p class="card-text text-center">{{ producto.descripcion || 'Descripción no disponible.' }}</p>
-        <button class="btn btn-sm btn-info text-white mt-auto" @click.stop="$emit('ver', producto)">Ver Más</button>
+      <h5 class="card-title">Descripción</h5>
+      <p class="card-text text-center">{{ producto.descripcion || 'Descripción no disponible.' }}</p>
+      <button 
+        class="btn btn-sm btn-warning text-white mt-auto" 
+        @click.stop="$emit('ver', producto)"
+      >
+        Ver Más
+      </button>
     </div>
-
-  </div>
+  </div>
 </template>
 
 <script>
@@ -34,102 +54,103 @@ export default {
     producto: {
       type: Object,
       required: true
-    },
-    placeholder: {
-      type: String,
-      default: "https://via.placeholder.com/240x200"
     }
   },
   data() {
     return {
-      isFlipped: false, // <-- Nueva propiedad
+      isFlipped: false
     };
   },
-  methods: {
+  methods: {
     flipCard() {
-      this.isFlipped = !this.isFlipped; // <-- Nuevo método
+      this.isFlipped = !this.isFlipped;
     }
   }
 };
 </script>
 
 <style scoped>
-
-/* 1. Contenedor del Flip */
+/* Contenedor principal con efecto flip */
 .card-producto-container {
   width: 240px;
-  height: 330px; /* Alto fijo para que las caras coincidan */
-  perspective: 1000px; /* Define la distancia de la vista 3D */
+  height: 330px;
+  perspective: 1000px;
   border-radius: 16px;
+  position: relative;
 }
 
-/* 2. El elemento que voltea */
-.card-front, .card-back {
-  /* Posicionamiento y dimensiones */
+/* Caras del flip */
+.card-front,
+.card-back {
   position: absolute;
   width: 100%;
   height: 100%;
-  
-  /* Animación */
   transition: transform 0.8s ease;
-  backface-visibility: hidden; /* Esto oculta la cara trasera mientras está de frente */
-  
-  /* Estilos generales */
+  backface-visibility: hidden;
   border-radius: 16px;
   background-color: #fff3e0;
 }
 
-/* 3. Estilo del Frente */
+/* Estado inicial y volteado */
 .card-front {
-  transform: rotateY(0deg); /* Estado inicial (visible) */
+  transform: rotateY(0deg);
 }
-
-/* 4. Estilo de la Espalda */
 .card-back {
-  /* Voltea 180 grados inicialmente para que quede oculto */
   transform: rotateY(180deg);
-  background-color: #ff9800; /* Fondo diferente para la descripción */
+  background-color: #ff9800;
   color: white;
   padding: 1rem;
 }
 
-/* 5. Estado Volteado (CLAVE) */
+/* Animación del flip */
 .flipped .card-front {
   transform: rotateY(-180deg);
 }
-
 .flipped .card-back {
-  transform: rotateY(0deg); /* Vuelve a 0 grados, quedando visible */
+  transform: rotateY(0deg);
 }
 
-/* Estilos de Contenido (Ajustes) */
+/* Imagen del producto */
 .card-img-top {
   width: 100%;
   height: 180px;
   object-fit: cover;
   border-bottom: 3px solid #ff9800;
-  border-top-left-radius: 16px; /* Asegurar que la imagen respete el radio */
+  border-top-left-radius: 16px;
   border-top-right-radius: 16px;
 }
 
+/* Placeholder cuando no hay imagen */
+.card-placeholder {
+  width: 100%;
+  height: 180px;
+  background-color: #ffecb3;
+  border-bottom: 3px solid #ff9800;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}
+.card-placeholder-icon {
+  font-size: 3rem;
+  color: #ff9800;
+}
+
+/* Texto y botones */
 .card-title {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
 }
-
 .precio {
   color: #ff5722;
   font-weight: 700;
   font-size: 1rem;
   margin: 0;
 }
-
 .card-footer {
   background-color: #fff3e0;
   border-top: none;
   padding: 0.5rem;
-  border-bottom-left-radius: 16px; 
+  border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
 }
 </style>

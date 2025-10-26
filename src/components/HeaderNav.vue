@@ -67,14 +67,20 @@ export default {
 <style scoped>
 .navbar {
   background-color: #ff66007d; /* fondo naranja */
+  position: relative;
 }
 
 .navbar-brand {
   font-size: 1.6rem;
   display: flex;
-  align-items: center;
+  align-items: left;
   color: #fff !important;
+
+  position: absolute;
+  left: 50%;
+  transform: translateX(-750%);
 }
+
 
 .nav-link {
   font-weight: 500;
@@ -94,4 +100,10 @@ export default {
 .navbar-toggler-icon {
   background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='rgba%28255, 255, 255, 0.7%29' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
 }
+
+.container-fluid {
+  padding-right: 100px; /* más espacio a la derecha */
+  padding-left: 50px; /* opcional, por simetría */
+}
+
 </style>

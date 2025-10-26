@@ -1,16 +1,16 @@
 import { createCrud } from '../api/crudFactory.js';
+import { API_BASE } from '../api/httpClient.js';
 
 const productoCrud = createCrud('productos');
 
 export const ProductoService = {
   ...productoCrud,
 
-  ontenerTodos: async () => {
+  obtenerTodos: async () => {
     const response = await fetch(`${API_BASE}/productos`);
     if (!response.ok) throw new Error('Failed to fetch productos');
     return response.json();
   },
-
 
   getProductosByNegocio: async (negocioId) => {
     const response = await fetch(`${API_BASE}/productos/negocio/${negocioId}`);
