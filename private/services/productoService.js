@@ -6,6 +6,22 @@ const productoCrud = createCrud('productos');
 export const ProductoService = {
   ...productoCrud,
 
+  async getProductosByCategoria(categoriaId) {
+    try {
+      let productos = await productoCrud.getAll();
+
+      if (productos.data) productos = productos.data;
+      if (!Array.isArray(productos)) throw new Error("La respuesta no es un array de productos");
+
+      // Filtrar por categoriaProductoId
+      return productos.filter(p => p.categoriaProductoId === categoriaId);
+    } catch (error) {
+      console.error("Error al filtrar productos por categoría:", error);
+      throw error;
+    }
+  },
+
+
   obtenerTodos: async () => {
     const response = await fetch(`${API_BASE}/productos`);
     if (!response.ok) throw new Error('Failed to fetch productos');
@@ -17,12 +33,12 @@ export const ProductoService = {
     if (!response.ok) throw new Error('Productos not found for negocio');
     return response.json();
   },
-  
+  /* 
   getProductosByCategoria: async (categoriaId) => {
     const response = await fetch(`${API_BASE}/productos/categoria/${categoriaId}`);
     if (!response.ok) throw new Error('Productos not found for categoria');
     return response.json();
-  },
+  }, */
   
   buscarProductos: async (termino) => {
     const response = await fetch(`${API_BASE}/productos/buscar?q=${encodeURIComponent(termino)}`);

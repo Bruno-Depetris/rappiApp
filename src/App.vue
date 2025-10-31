@@ -1,11 +1,25 @@
-<!-- App.vue -->
 <template>
-  <router-view />
+  <div>
+    <HeaderNav
+      :usuario-logueado="usuarioLogueado"
+      :carrito-items="carritoItems"
+      :carrito-visible.sync="carritoVisible"
+    />
+    <RouterView />
+  </div>
 </template>
 
 <script setup>
-// no hace falta importar MainView ni Perfil aquí
+import HeaderNav from './components/HeaderNav.vue'
+import { ref } from 'vue'
+
+const usuarioLogueado = ref(null)
+const carritoItems = ref([])
+const carritoVisible = ref(false)
 </script>
 
-<style scoped>
+<style>
+/* opcional: estilos globales */
+
+
 </style>

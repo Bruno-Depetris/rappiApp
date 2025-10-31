@@ -66,8 +66,13 @@ export default {
 
 <style scoped>
 .navbar {
-  background-color: #ff66007d; /* fondo naranja */
-  position: relative;
+  background-color: #7b421c00; /* fondo naranja */
+  backdrop-filter: blur(10px);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 2000;
+  border-radius: 0rem 0rem 12px 12px;
 }
 
 .navbar-brand {
@@ -75,10 +80,9 @@ export default {
   display: flex;
   align-items: left;
   color: #fff !important;
-
+  
   position: absolute;
-  left: 50%;
-  transform: translateX(-750%);
+  left: 2%;
 }
 
 
@@ -102,7 +106,7 @@ export default {
 }
 
 .container-fluid {
-  padding-right: 100px; /* más espacio a la derecha */
+  padding-right: 10px; /* más espacio a la derecha */
   padding-left: 50px; /* opcional, por simetría */
 }
 

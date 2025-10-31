@@ -1,10 +1,6 @@
 <template>
   <div class="main-view-background">
-    <HeaderNav
-      :usuario-logueado="usuarioLogueado"
-      :carrito-items="carritoItems"
-      :carrito-visible.sync="carritoVisible"
-    />
+
 
     <div class="hero-banner-container">
       <div class="hero-content">
@@ -44,7 +40,6 @@
           v-for="categoria in categorias"
           :key="categoria.id"
           @click="seleccionarCategoria(categoria.id)"
-          :class="{ 'active': categoria.id === categoriaSeleccionada }"
         >
           <img :src="categoria.imagen" :alt="categoria.nombre" class="category-image" />
           <div class="category-name">{{ categoria.nombre }}</div>
@@ -61,6 +56,7 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import HeaderNav from '../components/HeaderNav.vue';
 import ProductCard from '../components/ProductCard.vue';
 import ProductModal from '../components/ProductModal.vue';
@@ -78,24 +74,26 @@ import promo from '../assets/promocion.png';
 
 export default {
   name: 'MainView',
-  components: { HeaderNav, ProductCard },
+  components: { HeaderNav, ProductCard, ProductModal },
   setup() {
+    const router = useRouter();
+    
     const usuarioLogueado = ref(null);
     const productos = ref([]);
     const categorias = ref([
-      { id: 1, nombre: "Hamburguesas", imagen: hamburguesaImg },
-      { id: 2, nombre: "Pizzas", imagen: pizzaImg },
+      { id: 1, nombre: "Pizzas", imagen: pizzaImg },
+      { id: 2, nombre: "Hamburguesas", imagen: hamburguesaImg },
       { id: 3, nombre: "Bebidas", imagen: gaseosaImg },
       { id: 4, nombre: "Postres", imagen: heladoImg },
       { id: 5, nombre: "Ensaladas", imagen: ensaladaImg },
-      { id: 6, nombre: "Promos", imagen: promo }
     ]);
     const carrito = ref(null);
     const carritoItems = ref([]);
     const carritoVisible = ref(false);
     const loading = ref(true);
-    const categoriaSeleccionada = ref(null);
     const terminoBusqueda = ref('');
+    const productoSeleccionado = ref(null);
+    const modalVisible = ref(false);
 
     const carritoCount = computed(() => 
       carritoItems.value.reduce((total, item) => total + item.cantidad, 0)
@@ -120,7 +118,7 @@ export default {
             carritoItems.value = await CarritoService.getItemsByCarrito(carrito.value.id);
           }
         }
-        //REVISAR ESTE ENDPOINT. DEBERIA SER EL DE getProductosPopulares
+        
         const productosPopulares = await ProductoService.obtenerTodos();
         productos.value = productosPopulares.map(p => ({
           id: p.productoId,
@@ -131,9 +129,6 @@ export default {
           imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
         }));
 
-        const categoriasActivas = await CategoriaService.getCategoriasActivas();
-        if (categoriasActivas) categorias.value = categoriasActivas;
-
       } catch (error) {
         console.error('Error al cargar datos:', error);
         Notificar.error('❌ Error al cargar los datos');
@@ -142,26 +137,8 @@ export default {
       }
     };
 
-    const seleccionarCategoria = async (categoriaId) => {
-      categoriaSeleccionada.value = categoriaSeleccionada.value === categoriaId ? null : categoriaId;
-
-      if (categoriaSeleccionada.value) {
-        try {
-          const productosPorCategoria = await ProductoService.getProductosByCategoria(categoriaSeleccionada.value);
-          productos.value = productosPorCategoria.map(p => ({
-            id: p.productoId,
-            nombre: p.nombre,
-            precio: p.precio,
-            descripcion: p.descripcion,
-            disponibilidad: p.disponibilidad,
-            imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
-          }));
-        } catch {
-          Notificar.error('No se pudieron cargar los productos de la categoría');
-        }
-      } else {
-        await inicializarDatos();
-      }
+    const seleccionarCategoria = (categoriaId) => {
+      router.push({ name: 'CategoriaView', params: { id: categoriaId } });
     };
 
     const toggleCarrito = () => {
@@ -170,9 +147,9 @@ export default {
       if (carritoDiv) carritoDiv.style.display = carritoVisible.value ? 'block' : 'none';
     };
 
-    const verProducto = async (producto) => {
-      console.log('ver producto:', producto);
-      // Abrir modal acá
+    const verProducto = (producto) => {
+      productoSeleccionado.value = producto;
+      modalVisible.value = true;
     };
 
     const agregarAlCarrito = async (producto) => {
@@ -200,12 +177,16 @@ export default {
         Notificar.exito('Producto agregado correctamente', 3);
 
       } catch (error) {
+        console.error('Error al agregar al carrito:', error);
         Notificar.error('Error al cargar producto al carrito', 3);
       }
     };
 
     const buscarProductos = async () => {
-      if (!terminoBusqueda.value) return inicializarDatos();
+      if (!terminoBusqueda.value.trim()) {
+        return inicializarDatos();
+      }
+      
       try {
         const resultados = await ProductoService.buscarProductos(terminoBusqueda.value);
         productos.value = resultados.map(p => ({
@@ -216,7 +197,12 @@ export default {
           disponibilidad: p.disponibilidad,
           imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
         }));
-      } catch {
+        
+        if (resultados.length === 0) {
+          Notificar.info('No se encontraron productos');
+        }
+      } catch (error) {
+        console.error('Error al buscar productos:', error);
         Notificar.error('No se pudieron buscar los productos');
       }
     };
@@ -233,10 +219,11 @@ export default {
       carritoItems,
       carritoVisible,
       loading,
-      categoriaSeleccionada,
       carritoCount,
       carritoTotal,
       terminoBusqueda,
+      productoSeleccionado,
+      modalVisible,
       inicializarDatos,
       seleccionarCategoria,
       toggleCarrito,
