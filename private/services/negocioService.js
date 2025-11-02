@@ -37,5 +37,42 @@ export const NegocioService = {
     const response = await fetch(`${API_BASE}/negocios/vendedor/${vendedorId}`);
     if (!response.ok) throw new Error('Negocios not found for vendedor');
     return response.json();
-  }
+  },
+
+  // Actualizar el negocio creo que es nombre y un par mas de cosas pero despues se puede ver que validacion para ver que puede actualizar en especifico
+  updateNegocio: async (id, data) => {
+    return await negocioCrud.update(id, data);
+  },
+
+  // Obtener pedidos con mis productos
+  //nose si ponerlo aca o en vendedor AYUDAAAA (y los que siguen)
+  getPedidosConMisProductos: async (vendedorId) => {
+    const pedidos = await pedidoCrud.getAll();
+    return pedidos.filter(pedido => {
+      if (!pedido.detalles) return false;
+      return pedido.detalles.some(detalle => detalle.vendedorId === vendedorId);
+    });
+  },
+
+  // Filtrar mis pedidos por estado
+  getMisPedidosByEstado: async (vendedorId, estado) => {
+    const pedidos = await NegocioService.getPedidosConMisProductos(vendedorId);
+    return pedidos.filter(pedido => pedido.estado === estado);
+  },
+
+  // este se puede usar tambien para impuestos pero tampoco se donde ponerlo encima no me acuerdo si el negocio tiene esto, pero bueno XD
+  calcularComision: (total, porcentaje) => {
+    return (total * porcentaje) / 100;
+  },
+
+// Calcular ganancia neta para hacerle un pequeño informe al vendedor de cuanto va ganando (asi ve solo lo que gana y no lo que piernde con los hacer los productos le gana el consumismo y usa mas nuestra app)
+  calcularGananciaNeta: (total, porcentaje) => {
+    return total - NegocioService.calcularComision(total, porcentaje);
+  },
+
+
+  
+
+
+
 };

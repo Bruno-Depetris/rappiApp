@@ -55,5 +55,6 @@ export const PedidoService = {
     const response = await fetch(`${API_BASE}/pedidos/${pedidoId}/tiempo-entrega`);
     if (!response.ok) throw new Error('Failed to calculate delivery time');
     return response.json();
-  }
+  },
+  
 };

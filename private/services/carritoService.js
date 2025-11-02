@@ -4,6 +4,7 @@ const carritoCrud = createCrud('carritos');
 
 export const CarritoService = {
   ...carritoCrud,
+  
     getCarritoByUsuario: async (usuarioId) => {
     const response = await fetch(`${API_BASE}/carritos/usuario/${usuarioId}`);
     if (!response.ok) throw new Error('Carrito not found for usuario');
