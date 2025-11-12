@@ -66,6 +66,7 @@
 <script>
 import { UsuarioService, ProductoService, CarritoService, CategoriaService } from '../../private/services';
 import { Notificar } from "../utils/notificaciones";
+
 export default {
   name: 'MainView',
   data() {

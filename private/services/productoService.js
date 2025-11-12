@@ -5,9 +5,7 @@ const productoCrud = createCrud('productos');
 export const ProductoService = {
   ...productoCrud, // con esto se puede llamar a los basicos getAll, getById, create, update, delete
 
-  getProductos: async () => {
-    return await productoCrud.getAll();
-  },
+
 
   getProductosByCategoria: async (categoriaId) => {
     const allProductos = await productoCrud.getAll();

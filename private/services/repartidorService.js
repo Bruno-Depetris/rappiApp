@@ -49,4 +49,5 @@ export const RepartidorService = {
     return await RepartidorService.getRepartidorById(pedido.repartidorId);
   },
 
+   
 };
