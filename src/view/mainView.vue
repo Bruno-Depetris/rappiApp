@@ -64,14 +64,6 @@ import ProductModal from '../components/ProductModal.vue';
 import { UsuarioService, ProductoService, CarritoService, CategoriaService } from '../../private/services';
 
 import { Notificar } from "../utils/notificaciones";
-
-import hamburguesaImg from '../assets/hamburguesa.png';
-import pizzaImg from '../assets/pizza.png';
-import gaseosaImg from '../assets/gaseosa.png';
-import heladoImg from '../assets/helado.png';
-import ensaladaImg from '../assets/ensalada.png';
-import promo from '../assets/promocion.png';
-
 export default {
   name: 'MainView',
   components: { HeaderNav, ProductCard, ProductModal },

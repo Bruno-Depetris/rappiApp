@@ -1,35 +1,98 @@
 import { createCrud } from '../api/crudFactory.js';
 
 const categoriaCrud = createCrud('categorias');
+const negocioCrud = createCrud('negocios');
 
 export const CategoriaService = {
   ...categoriaCrud,
-  
-  getCategoriasActivas: async () => {
-    const response = await fetch(`${API_BASE}/categorias/activas`);
-    if (!response.ok) throw new Error('Active categorias not found');
-    return response.json();
+
+
+  // Buscar categoría por nombre
+  buscarPorNombre: async (nombre) => {
+    const categorias = await categoriaCrud.getAll();
+    return categorias.filter(cat => 
+      cat.nombre.toLowerCase().includes(nombre.toLowerCase())
+    );
   },
-  
-  getCategoriasPadre: async () => {
-    const response = await fetch(`${API_BASE}/categorias/padre`);
-    if (!response.ok) throw new Error('Parent categorias not found');
-    return response.json();
+
+  // Obtener negocios por categoría
+  getNegociosPorCategoria: async (categoriaId) => {
+    const negocios = await negocioCrud.getAll();
+    return negocios.filter(negocio => negocio.categoriaId === categoriaId);
   },
-  
-  getSubcategorias: async (categoriaId) => {
-    const response = await fetch(`${API_BASE}/categorias/${categoriaId}/subcategorias`);
-    if (!response.ok) throw new Error('Subcategorias not found');
-    return response.json();
+
+  // Obtener negocios activos por categoría
+  getNegociosActivosPorCategoria: async (categoriaId) => {
+    const negocios = await negocioCrud.getAll();
+    return negocios.filter(negocio => 
+      negocio.categoriaId === categoriaId && negocio.estado === 'Aprobado'
+    );
   },
-  
-  ordenarCategorias: async (orden) => {
-    const response = await fetch(`${API_BASE}/categorias/ordenar`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orden })
+
+  // Contar negocios por categoría
+  contarNegociosPorCategoria: async (categoriaId) => {
+    const negocios = await CategoriaService.getNegociosPorCategoria(categoriaId);
+    return negocios.length;
+  },
+
+  // Obtener categorías con negocios
+  getCategoriasConNegocios: async () => {
+    const categorias = await categoriaCrud.getAll();
+    const negocios = await negocioCrud.getAll();
+
+    return categorias.map(cat => ({
+      ...cat,
+      cantidadNegocios: negocios.filter(n => n.categoriaId === cat.categoriaId).length
+    }));
+  },
+
+  // Obtener categorías con negocios activos
+  getCategoriasConNegociosActivos: async () => {
+    const categorias = await categoriaCrud.getAll();
+    const negocios = await negocioCrud.getAll();
+
+    return categorias.filter(cat => {
+      const negociosActivos = negocios.filter(n => 
+        n.categoriaId === cat.categoriaId && n.estado === 'Aprobado'
+      );
+      return negociosActivos.length > 0;
+    }).map(cat => ({
+      ...cat,
+      cantidadNegociosActivos: negocios.filter(n => 
+        n.categoriaId === cat.categoriaId && n.estado === 'Aprobado'
+      ).length
+    }));
+  },
+
+  // Ordenar categorías por nombre
+  ordenarPorNombre: (categorias, ascendente = true) => {
+    return [...categorias].sort((a, b) => {
+      const comparison = a.nombre.localeCompare(b.nombre);
+      return ascendente ? comparison : -comparison;
     });
-    if (!response.ok) throw new Error('Failed to order categorias');
-    return response.json();
+  },
+
+  // Ordenar categorías por cantidad de negocios
+  ordenarPorCantidadNegocios: async (ascendente = false) => {
+    const categoriasConNegocios = await CategoriaService.getCategoriasConNegocios();
+    return categoriasConNegocios.sort((a, b) => {
+      const comparison = b.cantidadNegocios - a.cantidadNegocios;
+      return ascendente ? -comparison : comparison;
+    });
+  },
+
+  // Verificar si una categoría tiene negocios
+  tieneNegocios: async (categoriaId) => {
+    const count = await CategoriaService.contarNegociosPorCategoria(categoriaId);
+    return count > 0;
+  },
+
+  // Obtener categoría más popular (con más negocios)
+  getCategoriaMasPopular: async () => {
+    const categorias = await CategoriaService.ordenarPorCantidadNegocios(false);
+    return categorias[0] || null;
   }
+
+
+
 };

@@ -4,55 +4,30 @@ const metodoPagoCrud = createCrud('metodos-pago');
 
 export const MetodoPagoService = {
   ...metodoPagoCrud,
-    getMetodosPagoByUsuario: async (usuarioId) => {
-    const response = await fetch(`${API_BASE}/metodos-pago/usuario/${usuarioId}`);
-    if (!response.ok) throw new Error('Metodos pago not found for usuario');
-    return response.json();
+// Crear método de pago (solo admin)
+  createMetodo: async (data) => {
+    return await metodoPagoCrud.create(data);
   },
-  
-  getMetodosPagoActivos: async () => {
-    const response = await fetch(`${API_BASE}/metodos-pago/activos`);
-    if (!response.ok) throw new Error('Active metodos pago not found');
-    return response.json();
+
+  // Actualizar método de pago (solo admin)
+  updateMetodo: async (id, data) => {
+    return await metodoPagoCrud.update(id, data);
   },
-  
-  agregarMetodoPagoAUsuario: async (usuarioId, metodoPagoData) => {
-    const response = await fetch(`${API_BASE}/metodos-pago`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuarioId, ...metodoPagoData })
-    });
-    if (!response.ok) throw new Error('Failed to add metodo pago');
-    return response.json();
+
+  // Eliminar método de pago (solo admin)
+  deleteMetodo: async (id) => {
+    return await metodoPagoCrud.delete(id);
   },
-  
-  validarMetodoPago: async (metodoPagoId, monto) => {
-    const response = await fetch(`${API_BASE}/metodos-pago/${metodoPagoId}/validar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ monto })
-    });
-    if (!response.ok) throw new Error('Failed to validate metodo pago');
-    return response.json();
+
+  // Buscar método de pago por nombre
+  buscarPorNombre: async (nombre) => {
+    const metodos = await metodoPagoCrud.getAll();
+    return metodos.filter(metodo => 
+      metodo.metodo.toLowerCase().includes(nombre.toLowerCase())
+    );
   },
+
+
+
   
-  procesarPago: async (metodoPagoId, monto, pedidoId) => {
-    const response = await fetch(`${API_BASE}/metodos-pago/${metodoPagoId}/procesar`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ monto, pedidoId })
-    });
-    if (!response.ok) throw new Error('Failed to process payment');
-    return response.json();
-  },
-  
-  establecerMetodoPagoPredeterminado: async (usuarioId, metodoPagoId) => {
-    const response = await fetch(`${API_BASE}/metodos-pago/${metodoPagoId}/predeterminado`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuarioId })
-    });
-    if (!response.ok) throw new Error('Failed to set default metodo pago');
-    return response.json();
-  }
 };

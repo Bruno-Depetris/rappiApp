@@ -1,56 +1,91 @@
 import { createCrud } from '../api/crudFactory.js';
 
-const carritoCrud = createCrud('carritos');
+const carritoCrud = createCrud('carrito');
+const productoCrud = createCrud('productos');
 
 export const CarritoService = {
   ...carritoCrud,
-    getCarritoByUsuario: async (usuarioId) => {
-    const response = await fetch(`${API_BASE}/carritos/usuario/${usuarioId}`);
-    if (!response.ok) throw new Error('Carrito not found for usuario');
-    return response.json();
+
+  vaciarCarrito: async () => {
+    return await carritoCrud.delete('vaciar');
   },
   
-  crearCarritoParaUsuario: async (usuarioId) => {
-    const response = await fetch(`${API_BASE}/carritos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usuarioId })
+  // Obtener items del carrito
+  getItems: async () => {
+    const carrito = await CarritoService.getMiCarrito();
+    return carrito.items || [];
+  },
+
+  // Agregar item al carrito (POST /api/carrito/items)
+  agregarItem: async (productoId, cantidad) => {
+    // Nota: Esto hace POST a /api/carrito pero necesitamos /api/carrito/items
+    // Solución temporal: crear un nuevo crud para items
+    const itemsCrud = createCrud('carrito/items');
+    return await itemsCrud.create({
+      ProductoId: productoId,
+      Cantidad: cantidad
     });
-    if (!response.ok) throw new Error('Failed to create carrito');
-    return response.json();
   },
-  
-  vaciarCarrito: async (carritoId) => {
-    const response = await fetch(`${API_BASE}/carritos/${carritoId}/vaciar`, {
-      method: 'DELETE'
+
+  // Actualizar cantidad de item 
+  actualizarCantidad: async (itemId, cantidad) => {
+    const itemsCrud = createCrud('carrito/items');
+    return await itemsCrud.update(itemId, {
+      Cantidad: cantidad
     });
-    if (!response.ok) throw new Error('Failed to empty carrito');
-    return response.json();
   },
-  
-  calcularTotalCarrito: async (carritoId) => {
-    const response = await fetch(`${API_BASE}/carritos/${carritoId}/total`);
-    if (!response.ok) throw new Error('Failed to calculate carrito total');
-    return response.json();
+
+  // Eliminar item
+  eliminarItem: async (itemId) => {
+    const itemsCrud = createCrud('carrito/items');
+    return await itemsCrud.delete(itemId);
   },
-  
-  aplicarCuponAlCarrito: async (carritoId, cuponCodigo) => {
-    const response = await fetch(`${API_BASE}/carritos/${carritoId}/aplicar-cupon`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cuponCodigo })
+
+  // ==================== GESTIÓN DE CUPONES ====================
+
+  // Aplicar cupón
+  aplicarCupon: async (codigo) => {
+    const cuponesCrud = createCrud('carrito/cupones');
+    return await cuponesCrud.create({
+      Codigo: codigo
     });
-    if (!response.ok) throw new Error('Failed to apply coupon to carrito');
-    return response.json();
   },
+
+  // Remover cupón
+  removerCupon: async (cuponId) => {
+    const cuponesCrud = createCrud('carrito/cupones');
+    return await cuponesCrud.delete(cuponId);
+  },
+
+  // Obtener cupones aplicados
+  getCupones: async () => {
+    const carrito = await CarritoService.getMiCarrito();
+    return carrito.cupones || [];
+  },
+
   
-  convertirCarritoAPedido: async (carritoId, metodoPagoId) => {
-    const response = await fetch(`${API_BASE}/carritos/${carritoId}/convertir-pedido`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ metodoPagoId })
-    });
-    if (!response.ok) throw new Error('Failed to convert carrito to pedido');
-    return response.json();
-  }
+  calcularSubtotalItem: (item) => {
+    return item.cantidad * item.precioUnitario;
+  },
+
+  calcularSubtotal: (items) => {
+    return items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+  },
+
+  calcularDescuentos: (cupones) => {
+    return cupones.reduce((sum, cupon) => sum + (cupon.descuentoAplicado || 0), 0);
+  },
+
+  // Calcular total del carrito
+  calcularTotal: (items, cupones = []) => {
+    const subtotal = CarritoService.calcularSubtotal(items);
+    const descuentos = CarritoService.calcularDescuentos(cupones);
+    return subtotal - descuentos;
+  },
+
+  // Contar items en el carrito
+  contarItems: (items) => {
+    return items.reduce((sum, item) => sum + item.cantidad, 0);
+  },
+
 };

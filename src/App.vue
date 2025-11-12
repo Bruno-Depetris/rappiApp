@@ -10,16 +10,14 @@
 </template>
 
 <script setup>
-import HeaderNav from './components/HeaderNav.vue'
-import { ref } from 'vue'
-
-const usuarioLogueado = ref(null)
-const carritoItems = ref([])
-const carritoVisible = ref(false)
+// import HelloWorld from './components/HelloWorld.vue'
+import mainView from './view/mainView.vue';
 </script>
 
-<style>
-/* opcional: estilos globales */
+<template>
+  <mainView/>
+  <!-- <HelloWorld msg="Vite + Vue" /> -->
+</template>
 
-
+<style scoped>
 </style>
