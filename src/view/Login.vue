@@ -9,10 +9,9 @@
       </div>
     </div>
 
-    <!-- Container Principal -->
     <div class="container auth-container">
       <div class="auth-card">
-        <!-- Pestañas -->
+
         <div class="tabs">
           <button 
             :class="['tab', { active: modo === 'login' }]"
@@ -37,19 +36,16 @@
           </p>
         </div>
 
-        <!-- Mensaje de error -->
         <div v-if="error" class="alert alert-error">
           <span class="alert-icon">⚠️</span>
           <span>{{ error }}</span>
         </div>
 
-        <!-- Mensaje de éxito -->
         <div v-if="success" class="alert alert-success">
           <span class="alert-icon">✓</span>
           <span>{{ success }}</span>
         </div>
 
-        <!-- Formulario de Login -->
         <form v-if="modo === 'login'" @submit.prevent="handleLogin" class="auth-form">
           <div class="form-group">
             <label for="login-email">
@@ -97,7 +93,6 @@
           </button>
         </form>
 
-        <!-- Formulario de Register -->
         <form v-else @submit.prevent="handleRegister" class="auth-form">
           <div class="form-group">
             <label for="register-nombre">
@@ -192,7 +187,6 @@
           </button>
         </form>
 
-        <!-- Footer del card -->
         <div class="card-footer">
           <div class="footer-info">
             <span class="footer-icon">🔒</span>

@@ -1,6 +1,6 @@
 <template>
   <div class="categoria-view">
-    <!-- Hero Section con imagen de fondo -->
+
     <div class="categoria-hero" :style="{ backgroundImage: `url(${categoriaImagen})` }">
       <div class="hero-overlay">
         <div class="container">
@@ -9,22 +9,19 @@
       </div>
     </div>
 
-    <!-- Contenedor de productos -->
     <div class="container productos-container">
-      <!-- Loading -->
+
       <div v-if="loading" class="loading-container">
         <div class="spinner"></div>
         <p class="loading-text">Cargando productos deliciosos...</p>
       </div>
 
-      <!-- Sin productos -->
       <div v-else-if="productos.length === 0" class="empty-state">
         <div class="empty-icon">🍽️</div>
         <h3>No hay productos disponibles</h3>
         <p>Esta categoría está temporalmente vacía</p>
       </div>
 
-      <!-- Grid de productos -->
       <div v-else class="productos-grid">
         <div
           class="producto-wrapper"

@@ -1,213 +1,304 @@
 <template>
-    <div class="carrito-view-background">
-        <div class="carrito-hero-banner">
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <h1 class="hero-title">Tu Carrito</h1>
-                <p class="hero-subtitle">Revisa tus productos antes de finalizar tu pedido</p>
-            </div>
-        </div>
-
-        <div class="container carrito-container">
-            <div v-if="loading" class="loading-container text-center">
-                <div class="spinner"></div>
-                <p class="loading-text">Cargando tu carrito...</p>
-            </div>
-
-            <div v-else-if="carritoCount === 0" class="carrito-vacio">
-                <div class="empty-icon">🛒</div>
-                <h3 class="empty-title">¡Tu carrito está vacío!</h3>
-                <p class="empty-subtitle">Agrega algunos productos deliciosos para empezar</p>
-                <button @click="irAHome" class="btn-explorar">
-                    <span>Ver Productos</span>
-                    <span class="icono-flecha">→</span>
-                </button>
-            </div>
-
-            <div v-else class="row g-4">
-                <div class="col-lg-8">
-                    <div class="productos-lista">
-                        <div
-                            class="producto-item simple"
-                            v-for="item in carritoItems"
-                            :key="item.carritoItemId"
-                        >
-                            <div class="producto-info">
-                                <h5 class="producto-nombre">{{ item.nombre || 'Producto Desconocido' }}</h5>
-                                <div class="producto-precio-unitario">
-                                    ${{ item.precioUnitario.toFixed(2) }} c/u
-                                </div>
-                            </div>
-
-                            <div class="producto-acciones">
-                                <div class="cantidad-control">
-                                    <button
-                                        class="btn-cantidad"
-                                        @click="cambiarCantidad(item.carritoItemId, -1)"
-                                        :disabled="item.cantidad <= 1 || isDeleting"
-                                    >
-                                        -
-                                    </button>
-                                    <span class="cantidad-valor">{{ item.cantidad }}</span>
-                                    <button 
-                                        class="btn-cantidad" 
-                                        @click="cambiarCantidad(item.carritoItemId, 1)"
-                                        :disabled="isDeleting"
-                                    >
-                                        +
-                                    </button>
-                                </div>
-                                
-                                <div class="producto-subtotal">
-                                    <span class="subtotal-label me-2 d-lg-none">Subtotal:</span>
-                                    <span class="subtotal-valor">${{ (item.precioUnitario * item.cantidad).toFixed(2) }}</span>
-                                </div>
-                                
-                                <button 
-                                    class="btn-eliminar" 
-                                    @click="eliminarItem(item.carritoItemId)"
-                                    :disabled="isDeleting" 
-                                >
-                                    🗑️
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-4">
-                    <div class="resumen-pedido">
-                        <div class="resumen-header">
-                            <h4 class="resumen-titulo">Resumen del Pedido</h4>
-                        </div>
-                        
-                        <div class="resumen-body">
-                            <div class="resumen-linea">
-                                <span>Subtotal ({{ carritoCount }} items)</span>
-                                <span class="resumen-valor">${{ carritoTotal.toFixed(2) }}</span>
-                            </div>
-                            
-                            <div class="resumen-linea">
-                                <span>Envío</span>
-                                <span class="resumen-valor envio-gratis">GRATIS</span>
-                            </div>
-                            
-                            <hr class="resumen-divider" />
-                            
-                            <div class="resumen-total">
-                                <span class="total-label">Total Final</span>
-                                <span class="total-valor">${{ carritoTotal.toFixed(2) }}</span>
-                            </div>
-
-                            <button 
-                                class="btn-finalizar-compra" 
-                                @click="finalizarCompra" 
-                                :disabled="procesando || carritoCount === 0"
-                            >
-                                <span v-if="procesando">Procesando...</span>
-                                <span v-else>
-                                    <span>Finalizar Compra</span>
-                                    <span class="icono-flecha">→</span>
-                                </span>
-                            </button>
-
-                            <button class="btn-seguir-comprando" @click="irAHome">
-                                Seguir Comprando
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="info-adicional">
-                        <div class="info-item">
-                            <span class="info-icono">🚚</span>
-                            <span class="info-texto">Envío gratis en todos los pedidos</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-icono">🔒</span>
-                            <span class="info-texto">Pago 100% seguro</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-icono">⏱️</span>
-                            <span class="info-texto">Entrega en 30-45 minutos</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="carrito-view-background">
+    <div class="carrito-hero-banner">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">Tu Carrito</h1>
+        <p class="hero-subtitle">Revisa tus productos antes de finalizar tu pedido</p>
+      </div>
     </div>
+
+    <div class="container carrito-container">
+      <div v-if="loading" class="loading-container text-center">
+        <div class="spinner"></div>
+        <p class="loading-text">Cargando tu carrito...</p>
+      </div>
+
+      <div v-else-if="carritoCount === 0" class="carrito-vacio">
+        <div class="empty-icon">🛒</div>
+        <h3 class="empty-title">¡Tu carrito está vacío!</h3>
+        <p class="empty-subtitle">Agrega algunos productos deliciosos para empezar</p>
+        <button @click="irAHome" class="btn-explorar">
+          <span>Ver Productos</span>
+          <span class="icono-flecha">→</span>
+        </button>
+      </div>
+
+      <div v-else class="row g-4">
+        <div class="col-lg-8">
+          <div class="productos-lista">
+            <div class="producto-item simple" v-for="item in carritoItems" :key="item.carritoItemId">
+              <div class="producto-info">
+                <h5 class="producto-nombre">{{ item.nombre || 'Producto Desconocido' }}</h5>
+                <div class="producto-precio-unitario">
+                  ${{ item.precioUnitario.toFixed(2) }} c/u
+                </div>
+              </div>
+
+              <div class="producto-acciones">
+                <div class="cantidad-control">
+                  <button class="btn-cantidad" @click="cambiarCantidad(item.carritoItemId, -1)"
+                    :disabled="item.cantidad <= 1 || isDeleting">
+                    -
+                  </button>
+                  <span class="cantidad-valor">{{ item.cantidad }}</span>
+                  <button class="btn-cantidad" @click="cambiarCantidad(item.carritoItemId, 1)" :disabled="isDeleting">
+                    +
+                  </button>
+                </div>
+
+                <div class="producto-subtotal">
+                  <span class="subtotal-label me-2 d-lg-none">Subtotal:</span>
+                  <span class="subtotal-valor">${{ (item.precioUnitario * item.cantidad).toFixed(2) }}</span>
+                </div>
+
+                <button class="btn-eliminar" @click="eliminarItem(item.carritoItemId)" :disabled="isDeleting">
+                  🗑️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="resumen-pedido">
+            <div class="resumen-header">
+              <h4 class="resumen-titulo">Resumen del Pedido</h4>
+            </div>
+
+            <div class="resumen-body">
+              <div class="resumen-linea">
+                <span>Subtotal ({{ carritoCount }} items)</span>
+                <span class="resumen-valor">${{ carritoTotal.toFixed(2) }}</span>
+              </div>
+
+              <div class="resumen-linea">
+                <span>Envío</span>
+                <span class="resumen-valor envio-gratis">GRATIS</span>
+              </div>
+
+              <hr class="resumen-divider" />
+
+              <div class="resumen-total">
+                <span class="total-label">Total Final</span>
+                <span class="total-valor">${{ carritoTotal.toFixed(2) }}</span>
+              </div>
+              <div class="cupon-section">
+                <label class="cupon-label">Cupón de Descuento</label>
+                <div class="cupon-input-group">
+                  <input v-model="codigoCupon" type="text" class="cupon-input"
+                    placeholder="Ingresa tu código de cupón" />
+                  <button class="cupon-btn" @click="aplicarCupon">
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+              <div class="metodo-pago-selector">
+                <label class="metodo-label">Método de Pago</label>
+                <select v-model="metodoPagoSeleccionado" class="metodo-select" :disabled="metodosPago.length === 0">
+                  <option v-if="metodosPago.length === 0" :value="null">
+                    Cargando métodos...
+                  </option>
+                  <option v-for="metodo in metodosPago" :key="metodo.metodoId" :value="metodo.metodoId">
+                    {{ metodo.metodo }}
+                  </option>
+                </select>
+              </div>
+
+              <button class="btn-finalizar-compra" @click="finalizarCompra"
+                :disabled="procesando || carritoCount === 0">
+                <span v-if="procesando">Procesando...</span>
+                <span v-else>
+                  <span>Finalizar Compra</span>
+                  <span class="icono-flecha">→</span>
+                </span>
+              </button>
+
+              <button class="btn-seguir-comprando" @click="irAHome">
+                Seguir Comprando
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { useCarrito } from '../composables/useCarrito'; 
+import { useCarrito } from '../composables/useCarrito';
+import { PedidoService } from '../../private/services/PedidoService';
+import { MetodoPagoService } from '../../private/services/metodoPagoService';
 import { Notificar } from "../utils/notificaciones";
+import { CuponService } from '../../private/services/cuponService';
+import { CarritoService } from '../../private/services/carritoService';
 
 export default {
-    name: 'CarritoView',
-    setup() {
-        const router = useRouter();
-        
-        const { 
-            carritoItems, 
-            carritoCount, 
-            carritoTotal, 
-            syncCarritoData, 
-            eliminarItem,
-            isDeleting,
-            actualizarCantidad
-        } = useCarrito();
-        
-        const loading = ref(true);
-        const procesando = ref(false);
 
-        onMounted(async () => {
-            const usuarioId = localStorage.getItem('usuarioId');
-            if (usuarioId) {
-                await syncCarritoData(); 
-            }
-            loading.value = false;
+  name: 'CarritoView',
+  setup() {
+    const router = useRouter();
+
+    const {
+      carritoItems,
+      carritoInfo,
+      carritoCount,
+      carritoTotal,
+      syncCarritoData,
+      eliminarItem,
+      isDeleting,
+      actualizarCantidad
+    } = useCarrito();
+
+    const loading = ref(true);
+    const procesando = ref(false);
+
+    const metodosPago = ref([]);
+    const metodoPagoSeleccionado = ref(null);
+
+    const codigoCupon = ref('');
+    const cuponValidado = ref(null);
+
+    onMounted(async () => {
+      const usuarioId = localStorage.getItem('usuarioId');
+      if (usuarioId) {
+        await syncCarritoData();
+      }
+
+      try {
+        const data = await MetodoPagoService.getAll();
+        metodosPago.value = Array.isArray(data) ? data : [];
+        if (metodosPago.value.length > 0) {
+          metodoPagoSeleccionado.value = metodosPago.value[0].metodoId;
+        }
+      } catch (error) {
+        console.error('Error al obtener métodos de pago:', error);
+      }
+
+      loading.value = false;
+    });
+
+    const irAHome = () => {
+      router.push({ name: 'MainView' });
+    };
+
+    const cambiarCantidad = async (itemId, cambio) => {
+      const item = carritoItems.value.find(i => i.carritoItemId === itemId);
+      if (!item) return;
+
+      const nuevaCantidad = item.cantidad + cambio;
+
+      if (nuevaCantidad > 0) {
+        await actualizarCantidad(itemId, nuevaCantidad);
+      } else if (nuevaCantidad === 0) {
+        await eliminarItem(itemId);
+      }
+    };
+
+    const aplicarCupon = async () => {
+  if (!codigoCupon.value.trim()) {
+    Notificar.error('Ingresa un código de cupón');
+    return;
+  }
+  
+  try {
+
+    const response = await CuponService.validarCupon(codigoCupon.value.trim().toUpperCase());
+
+    if (!response.valido) {
+      Notificar.error(response.mensaje || 'Cupón no válido o expirado');
+      return;
+    }
+
+    await CarritoService.aplicarCupon(response.cupon.codigo);
+
+    await syncCarritoData();
+
+    Notificar.exito(`Cupón "${response.cupon.codigo}" aplicado con éxito`, 3);
+
+  } catch (error) {
+    console.error('Error al aplicar cupón:', error);
+
+    if (error.message?.includes('ya está aplicado')) {
+      Notificar.error('Este cupón ya está aplicado', 3);
+    } else if (error.message?.includes('vacío')) {
+      Notificar.error('Agrega productos antes de aplicar un cupón', 3);
+    } else {
+      Notificar.error('Error al aplicar el cupón', 3);
+    }
+  }
+};
+
+    const finalizarCompra = async () => {
+      if (carritoCount.value === 0) {
+        Notificar.error('El carrito está vacío');
+        return;
+      }
+
+      if (!carritoInfo.value.carritoId) {
+        Notificar.error('Error al obtener información del carrito');
+        return;
+      }
+
+      if (!metodoPagoSeleccionado.value) {
+        Notificar.error('Selecciona un método de pago');
+        return;
+      }
+
+      procesando.value = true;
+
+      try {
+        await PedidoService.create({
+          CarritoId: carritoInfo.value.carritoId,
+          MetodoPagoId: metodoPagoSeleccionado.value,
+          RepartidorId: null,
+          Resenia: null,
         });
 
-        const irAHome = () => {
-            router.push({ name: 'MainView' });
+        Notificar.exito('Pedido creado exitosamente');
+        await syncCarritoData();
+        router.push({ name: 'MisCompras' });
+
+      } catch (error) {
+        console.error('Error al crear pedido:', error);
+        if (error.message) {
+          if (error.message.includes('Stock insuficiente')) {
+            Notificar.error('Algunos productos no tienen stock suficiente');
+          } else if (error.message.includes('carrito')) {
+            Notificar.error('Error con el carrito. Recargando...');
+            await syncCarritoData();
+          } else if (error.message.includes('Método de pago')) {
+            Notificar.error('Método de pago no válido');
+          } else {
+            Notificar.error('Error al crear el pedido. Intenta nuevamente');
+          }
+        } else {
+          Notificar.error('Error al crear el pedido');
         }
+      } finally {
+        procesando.value = false;
+      }
+    };
 
-        const cambiarCantidad = async (itemId, cambio) => {
-            const item = carritoItems.value.find(i => i.carritoItemId === itemId);
-            if (!item) return;
-
-            const nuevaCantidad = item.cantidad + cambio;
-
-            if (nuevaCantidad > 0) {
-                await actualizarCantidad(itemId, nuevaCantidad);
-            } else if (nuevaCantidad === 0) {
-                await eliminarItem(itemId);
-            }
-        };
-
-        const finalizarCompra = () => {
-            procesando.value = true;
-            
-            setTimeout(() => {
-                Notificar.exito("¡Pedido realizado con éxito! 🎉");
-                procesando.value = false;
-            }, 2000);
-        };
-
-        return {
-            loading,
-            procesando,
-            carritoItems,
-            carritoCount,
-            carritoTotal,
-            irAHome,
-            eliminarItem,
-            isDeleting,
-            cambiarCantidad,
-            finalizarCompra,
-        };
-    },
+    return {
+      loading,
+      procesando,
+      carritoItems,
+      carritoCount,
+      carritoTotal,
+      irAHome,
+      eliminarItem,
+      isDeleting,
+      cambiarCantidad,
+      finalizarCompra,
+      metodosPago,
+      metodoPagoSeleccionado,
+      codigoCupon,
+      aplicarCupon
+    };
+  },
 };
 </script>
 
@@ -295,8 +386,13 @@ export default {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Carrito Vacío */
@@ -491,6 +587,39 @@ export default {
   transform: rotate(15deg) scale(1.1);
 }
 
+/* Métodos de pago */
+.metodo-pago-selector {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metodo-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+}
+
+.metodo-select {
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  background-color: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.metodo-select:focus {
+  outline: none;
+  border-color: #ff9900;
+}
+
+.metodo-select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
 /* Resumen del Pedido */
 .resumen-pedido {
   background: white;
@@ -658,6 +787,7 @@ export default {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -668,6 +798,7 @@ export default {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -675,9 +806,12 @@ export default {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-20px);
   }

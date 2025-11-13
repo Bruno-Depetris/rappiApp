@@ -1,70 +1,51 @@
 import { createCrud } from '../api/crudFactory.js';
+import * as http from '../api/httpClient.js';
 
 const cuponCrud = createCrud('cupones');
 
 export const CuponService = {
   ...cuponCrud,
 
-  // Obtener todos los cupones
-  getCupones: async () => {
-    return await cuponCrud.getAll();
+  getCuponesActivos: async () => {
+    return await http.get('cupones/activos');
   },
 
-  // Obtener cupón por ID
+  validarCupon: async (codigo) => {
+    return await http.get(`cupones/validar/${codigo}`);
+  },
+
+  getCupones: async (page = 1, limit = 10) => {
+    return await http.get(`cupones?page=${page}&limit=${limit}`);
+  },
+
   getCuponById: async (id) => {
     return await cuponCrud.getById(id);
   },
 
-  // Obtener cupones activos (vigentes y con usos disponibles)
-  getCuponesActivos: async () => {
-    const cupones = await cuponCrud.getAll();
-    const ahora = new Date();
-    
-    return cupones.filter(cupon => {
-      const vigente = !cupon.fechaExpiracion || new Date(cupon.fechaExpiracion) > ahora;
-      const conUsos = !cupon.usosMaximos || cupon.usosActuales < cupon.usosMaximos;
-      return vigente && conUsos;
+  crearCupon: async (cuponData) => {
+    return await cuponCrud.create({
+      Codigo: cuponData.codigo,
+      Descuento: cuponData.descuento,
+      TipoDescuento: cuponData.tipoDescuento, 
+      FechaExpiracion: cuponData.fechaExpiracion || null,
+      UsosMaximos: cuponData.usosMaximos || null,
     });
   },
 
-  // Buscar cupón por código
-  buscarPorCodigo: async (codigo) => {
-    const cupones = await cuponCrud.getAll();
-    return cupones.find(cupon => cupon.codigo.toUpperCase() === codigo.toUpperCase());
+  actualizarCupon: async (id, cuponData) => {
+    return await cuponCrud.update(id, {
+      Codigo: cuponData.codigo,
+      Descuento: cuponData.descuento,
+      TipoDescuento: cuponData.tipoDescuento,
+      FechaExpiracion: cuponData.fechaExpiracion || null,
+      UsosMaximos: cuponData.usosMaximos || null,
+    });
   },
 
-  // Validar cupón (verificar si es aplicable)
-  validarCupon: async (codigo) => {
-    const cupon = await CuponService.buscarPorCodigo(codigo);
-    
-    if (!cupon) {
-      return { valido: false, razon: 'Cupón no encontrado' };
-    }
-
-    if (!CuponService.estaVigente(cupon)) {
-      return { valido: false, razon: 'Cupón expirado' };
-    }
-
-    if (!CuponService.tieneUsosDisponibles(cupon)) {
-      return { valido: false, razon: 'Cupón sin usos disponibles' };
-    }
-
-    return { valido: true, cupon };
+  eliminarCupon: async (id) => {
+    return await cuponCrud.delete(id);
   },
 
-  // Verificar si un cupón está vigente
-  estaVigente: (cupon) => {
-    if (!cupon.fechaExpiracion) return true;
-    return new Date() <= new Date(cupon.fechaExpiracion);
-  },
-
-  // Verificar si un cupón tiene usos disponibles
-  tieneUsosDisponibles: (cupon) => {
-    if (!cupon.usosMaximos) return true;
-    return cupon.usosActuales < cupon.usosMaximos;
-  },
-
-  // Calcular descuento de un cupón
   calcularDescuento: (cupon, subtotal) => {
     if (cupon.tipoDescuento === 'porcentaje') {
       return (subtotal * cupon.descuento) / 100;
@@ -74,51 +55,16 @@ export const CuponService = {
     return 0;
   },
 
-  // Filtrar cupones por tipo de descuento
-  getCuponesByTipo: async (tipoDescuento) => {
-    const cupones = await cuponCrud.getAll();
-    return cupones.filter(cupon => cupon.tipoDescuento === tipoDescuento);
+  estaVigente: (cupon) => {
+    if (!cupon.fechaExpiracion) return true;
+    return new Date() <= new Date(cupon.fechaExpiracion);
   },
 
-  // Obtener cupones de porcentaje
-  getCuponesPorcentaje: async () => {
-    return await CuponService.getCuponesByTipo('porcentaje');
+  tieneUsosDisponibles: (cupon) => {
+    if (!cupon.usosMaximos) return true;
+    return cupon.usosActuales < cupon.usosMaximos;
   },
 
-  // Obtener cupones de monto fijo
-  getCuponesMonto: async () => {
-    return await CuponService.getCuponesByTipo('monto');
-  },
-
-  // Obtener cupones próximos a expirar (menos de 7 días)
-  getCuponesProximosAExpirar: async () => {
-    const cupones = await CuponService.getCuponesActivos();
-    const ahora = new Date();
-    const sieteDias = 7 * 24 * 60 * 60 * 1000;
-
-    return cupones.filter(cupon => {
-      if (!cupon.fechaExpiracion) return false;
-      const expiracion = new Date(cupon.fechaExpiracion);
-      return (expiracion - ahora) <= sieteDias && (expiracion - ahora) > 0;
-    });
-  },
-
-  // Obtener cupones más usados
-  getCuponesMasUsados: async (limite = 10) => {
-    const cupones = await cuponCrud.getAll();
-    return cupones
-      .sort((a, b) => (b.usosActuales || 0) - (a.usosActuales || 0))
-      .slice(0, limite);
-  },
-
-  // Verificar si un cupón está casi agotado (más del 80% de usos)
-  estaCasiAgotado: (cupon) => {
-    if (!cupon.usosMaximos) return false;
-    const porcentajeUso = (cupon.usosActuales / cupon.usosMaximos) * 100;
-    return porcentajeUso >= 80;
-  },
-
-  // Obtener días restantes para un cupón
   getDiasRestantes: (cupon) => {
     if (!cupon.fechaExpiracion) return null;
     const ahora = new Date();
@@ -127,17 +73,38 @@ export const CuponService = {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   },
 
-
-  // Generar código de cupón aleatorio
-  generarCodigoCupon: (prefijo = 'RAPPI') => {
-    const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let codigo = prefijo;
-    for (let i = 0; i < 6; i++) {
-      codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-    }
-    return codigo;
+  estaCasiAgotado: (cupon) => {
+    if (!cupon.usosMaximos) return false;
+    const porcentajeUso = (cupon.usosActuales / cupon.usosMaximos) * 100;
+    return porcentajeUso >= 80;
   },
 
+  formatearCupon: (cupon) => {
+    const descuentoTexto = cupon.tipoDescuento === 'porcentaje'
+      ? `${cupon.descuento}%`
+      : `$${cupon.descuento}`;
+    
+    return {
+      ...cupon,
+      descuentoTexto,
+      diasRestantes: CuponService.getDiasRestantes(cupon),
+      estaVigente: CuponService.estaVigente(cupon),
+      tieneUsosDisponibles: CuponService.tieneUsosDisponibles(cupon),
+      estaCasiAgotado: CuponService.estaCasiAgotado(cupon),
+    };
+  },
 
+  getColorEstado: (cupon) => {
+    if (!CuponService.estaVigente(cupon)) return 'danger';
+    if (!CuponService.tieneUsosDisponibles(cupon)) return 'secondary';
+    if (CuponService.estaCasiAgotado(cupon)) return 'warning';
+    return 'success';
+  },
 
+  getTextoEstado: (cupon) => {
+    if (!CuponService.estaVigente(cupon)) return 'Expirado';
+    if (!CuponService.tieneUsosDisponibles(cupon)) return 'Sin usos';
+    if (CuponService.estaCasiAgotado(cupon)) return 'Casi agotado';
+    return 'Activo';
+  },
 };

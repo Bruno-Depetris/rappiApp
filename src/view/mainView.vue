@@ -100,25 +100,22 @@ export default {
             agregarAlCarrito: agregarProductoAlCarrito 
         } = useCarrito()
         
-        const { isFavorito, toggleFavorito, syncFavoritos } = useFavoritos(); // 🚨 Favoritos
+        const { isFavorito, toggleFavorito, syncFavoritos } = useFavoritos(); 
 
         const inicializarDatos = async () => {
             loading.value = true
-            productos.value = [] // Limpiamos la lista mientras carga
+            productos.value = [] 
 
             try {
-                // 1. Obtener datos de usuario
                 const usuarioData = UsuarioService.obtenerUsuario(); 
                 
                 if (usuarioData) {
                     usuarioLogueado.value = usuarioData.nombre 
-                    
-                    // 2. Sincronizar estados dependientes del usuario
+
                     await syncCarritoData() 
-                    await syncFavoritos() // 🚨 Sincronizar Favoritos
+                    await syncFavoritos()
                 }
 
-                // 3. Carga de productos destacados
                 const productosPopulares = await ProductoService.obtenerTodos()
                 productos.value = productosPopulares.map(p => ({
                     id: p.productoId,
@@ -126,7 +123,6 @@ export default {
                     precio: p.precio,
                     descripcion: p.descripcion,
                     disponibilidad: p.disponibilidad,
-                    // Asumiendo que p.imagenes[0] es la URL de la imagen (completa o relativa)
                     imagen: p.imagenes?.[0] || 'https://placehold.co/150' 
                 }))
             } catch (error) {
@@ -154,8 +150,7 @@ export default {
                 Notificar.error('Error al cargar producto al carrito', 3)
             }
         }
-        
-        // 🚨 Función Handler para el botón de favorito
+
         const handleToggleFavorito = async (productoId) => {
             await toggleFavorito(productoId);
         }
@@ -206,9 +201,8 @@ export default {
             verProducto,
             agregarAlCarrito,
             buscarProductos,
-            // Favoritos
-            isFavorito, // 🚨 Exportar la función computada
-            handleToggleFavorito // 🚨 Exportar el handler
+            isFavorito,
+            handleToggleFavorito 
         }
     }
 }

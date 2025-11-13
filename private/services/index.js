@@ -10,7 +10,6 @@ export { CategoriaProductoService } from './categoriaProductoService.js';
 export { PedidoService } from './pedidoService.js';
 export { ItemPedidoService } from './itemPedidoService.js';
 export { CarritoService } from './carritoService.js';
-export { CarritoItemService } from './carritoItemService.js';
 export { MetodoPagoService } from './metodoPagoService.js';
 export { FavoritoService } from './favoritoService.js';
 export { CuponService } from './cuponService.js';
@@ -27,12 +26,10 @@ import { CategoriaProductoService } from './categoriaProductoService.js';
 import { PedidoService } from './pedidoService.js';
 import { ItemPedidoService } from './itemPedidoService.js';
 import { CarritoService } from './carritoService.js';
-import { CarritoItemService } from './carritoItemService.js';
 import { MetodoPagoService } from './metodoPagoService.js';
 import { FavoritoService } from './favoritoService.js';
 import { CuponService } from './cuponService.js';
 
-// Objeto central con todos los servicios (alternativa para uso global)
 export const AppServices = {
   usuario: UsuarioService,
   vendedor: VendedorService,
@@ -45,7 +42,6 @@ export const AppServices = {
   pedido: PedidoService,
   itemPedido: ItemPedidoService,
   carrito: CarritoService,
-  carritoItem: CarritoItemService,
   metodoPago: MetodoPagoService,
   favorito: FavoritoService,
   cupon: CuponService

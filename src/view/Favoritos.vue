@@ -1,6 +1,5 @@
 <template>
   <div class="favoritos-view-background">
-    <!-- Hero Banner -->
     <div class="favoritos-hero-banner">
       <div class="hero-overlay"></div>
       <div class="hero-content">
@@ -9,15 +8,13 @@
       </div>
     </div>
 
-    <!-- Contenido Principal -->
     <div class="container favoritos-container">
-      <!-- Loading -->
+
       <div v-if="loading" class="loading-container text-center">
         <div class="spinner"></div>
         <p class="loading-text">Cargando tus favoritos...</p>
       </div>
 
-      <!-- Sin Favoritos -->
       <div v-else-if="productosFavoritos.length === 0" class="favoritos-vacio">
         <div class="empty-icon">💔</div>
         <h3 class="empty-title">Aún no tienes favoritos</h3>
@@ -28,7 +25,6 @@
         </button>
       </div>
 
-      <!-- Grid de Productos Favoritos -->
       <div v-else>
         <div class="favoritos-header">
           <h2 class="favoritos-count">
