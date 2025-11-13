@@ -16,7 +16,7 @@
       </div>
 
       <div v-else-if="productosFavoritos.length === 0" class="favoritos-vacio">
-        <div class="empty-icon">💔</div>
+        <div class="empty-icon"></div>
         <h3 class="empty-title">Aún no tienes favoritos</h3>
         <p class="empty-subtitle">Explora nuestros productos y haz clic en el corazón para guardar tus preferidos</p>
         <button @click="irAHome" class="btn-explorar">
@@ -99,7 +99,6 @@ export default {
                 
                 productosFavoritos.value = productosConDetalles.filter(p => p && p.id);
             } catch (error) {
-                console.error('Error al cargar detalles de productos favoritos:', error);
                 Notificar.error('Hubo un error al obtener la información de tus productos.');
             }
         };

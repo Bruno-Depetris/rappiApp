@@ -25,12 +25,7 @@
             </router-link>
           </li>
           <li class="nav-item mx-2">
-            <router-link class="nav-link d-flex align-items-center" to="/pedidos">
-              <i class="bi bi-card-list me-1"></i>Pedidos
-            </router-link>
-          </li>
-          <li class="nav-item mx-2">
-            <router-link class="nav-link d-flex align-items-center" to="/mis-compras">
+            <router-link class="nav-link d-flex align-items-center" to="/MisCompras">
               <i class="bi bi-bag-check-fill me-1"></i>Mis Compras
             </router-link>
           </li>

@@ -344,7 +344,7 @@ export default {
           this.$router.push('/admin/dashboard');
           break;
         case 'vendedor':
-          this.$router.push('/vendedor/dashboard');
+          this.$router.push('/negocio');
           break;
         case 'repartidor':
           this.$router.push('/RepartidorDashboard');

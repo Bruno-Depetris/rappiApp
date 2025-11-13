@@ -24,8 +24,6 @@ const useFavoritos = () => {
             // Mapeamos para tener solo los IDs de producto favoritos para facilitar la búsqueda
             favoritos.value = lista.map(fav => fav.productoId); 
         } catch (error) {
-            console.error('Error al sincronizar favoritos:', error);
-            Notificar.error('Error al cargar tus favoritos.');
         }
     };
 

@@ -10,6 +10,7 @@ import Carrito from '../view/Carrito.vue'
 import Favoritos from '../view/Favoritos.vue'
 import Login from '../view/Login.vue'
 import RepartidorDashboard from '../view/RepartidorDashboard.vue'
+import Negocio from '../view/Negocio.vue'
 
 const routes = [
     {
@@ -31,7 +32,7 @@ const routes = [
         meta: { requiresHeader: true }
     },
     {
-        path: '/mis-compras',
+        path: '/MisCompras',
         name: 'MisCompras',
         component: MisCompras,
         meta: { requiresHeader: true }
@@ -46,6 +47,12 @@ const routes = [
         path: '/favoritos',
         name: 'Favoritos',
         component: Favoritos,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/negocio',
+        name: 'Negocio',
+        component: Negocio,
         meta: { requiresHeader: true }
     },
     {
