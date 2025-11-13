@@ -3,7 +3,7 @@
     <nav class="nav-bar">
         <button class="container-user">
             <i class="material-icons">person</i>
-            <p>{{ usuarioLogueado || 'Bruno Depetris' }}s</p>
+            <p>{{ usuarioLogueado || 'Bruno Depetris' }}cargando...</p>
             <p>Usuario</p>
         </button>
 

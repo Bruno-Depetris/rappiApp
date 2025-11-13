@@ -1,11 +1,12 @@
 <script setup>
 // import HelloWorld from './components/HelloWorld.vue'
-import mainView from './view/LogIn.vue';
+// import mainView from './view/LogIn.vue';
+import Vendedor from './view/Vendedor.vue';
 </script>
 
 <template>
-  <mainView/>
-  <!-- <HelloWorld msg="Vite + Vue" /> -->
+  <Vendedor/>
+  
 </template>
 
 <style scoped>
