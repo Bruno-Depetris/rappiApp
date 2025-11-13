@@ -22,17 +22,14 @@
         {{ modo === 'login' ? 'Inicia sesión en Rappi Clone' : 'Regístrate en Rappi Clone' }}
       </p>
 
-      <!-- Mensaje de error -->
       <div v-if="error" class="error-message">
         {{ error }}
       </div>
 
-      <!-- Mensaje de éxito -->
       <div v-if="success" class="success-message">
         {{ success }}
       </div>
 
-      <!-- Formulario de Login -->
       <form v-if="modo === 'login'" @submit.prevent="handleLogin">
         <div class="form-group">
           <label for="login-email">Email</label>
@@ -67,7 +64,6 @@
         </button>
       </form>
 
-      <!-- Formulario de Register -->
       <form v-else @submit.prevent="handleRegister">
         <div class="form-group">
           <label for="register-nombre">Nombre Completo</label>
