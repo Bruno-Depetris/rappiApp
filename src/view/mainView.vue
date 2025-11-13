@@ -1,493 +1,400 @@
 <template>
-<div>
-    <nav class="nav-bar">
-        <button class="container-user">
-            <i class="material-icons">person</i>
-            <p>{{ usuarioLogueado || 'Bruno Depetris' }}s</p>
-            <p>Usuario</p>
-        </button>
-
-        <button><span class="material-icons">newspaper</span> Novedades </button>
-        <button><span class="material-icons">category</span> Categorias </button>
-        <button @click="mostrarEjemplosNotificaciones"><span class="material-icons">notifications</span> Notificaciones </button>
-
-
-        <div class="container-carrito">
-            <button @click="toggleCarrito">
-                <span class="material-icons">shopping_cart</span>
-                <span v-if="carritoCount > 0" class="carrito-badge">{{ carritoCount }}</span>
-            </button>
-
-            <div class="container-carrito-datos" style="display: none;">
-                <label for="">Productos</label>
-                <div v-if="carritoItems.length > 0">
-                    <div v-for="item in carritoItems" :key="item.id" class="carrito-item">
-                        <p>{{ item.producto.nombre }} x{{ item.cantidad }}</p>
-                        <p>${{ (item.precio * item.cantidad).toFixed(2) }}</p>
-                    </div>
-                    <div class="carrito-total">
-                        <strong>Total: ${{ carritoTotal.toFixed(2) }}</strong>
+    <div class="main-view-background">
+        <div class="hero-banner-container">
+            <div class="hero-content">
+                <h1 class="hero-title">¿Tenés Hambre?</h1>
+                <p class="hero-subtitle">Encuentra los platos más cercanos a ti.</p>
+                <div class="search-form-container">
+                    <div class="input-group">
+                        <input type="text" placeholder="Busca un producto..." v-model="terminoBusqueda" class="address-input" />
+                        <button class="find-food-button" @click="buscarProductos">Buscar Comida</button>
                     </div>
                 </div>
-                <p v-else>todavia no hay productos...</p>
             </div>
         </div>
 
-    </nav>
+        <div class="container mt-5 text-center">
+            <h2 class="titulo-productos mb-5">Nuestros Productos Destacados</h2>
+            <div class="row justify-content-center">
+                <div
+                    class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center"
+                    v-for="producto in productos"
+                    :key="producto.id"
+                >
+                    <ProductCard
+                        :producto="producto"
+                        :is-favorito="isFavorito(producto.id)"
+                        @ver="verProducto"
+                        @agregar="agregarAlCarrito"
+                        @toggle-favorito="handleToggleFavorito"
+                    />
+                </div>
+            </div>
+        </div>
 
-<!-- POR AHORA NO ME GUSTA EL RESULTADO  -->
-    <!-- <div class="container-carrousel">
-        <img :src="productos.length > 0 ? productos[0].imagen : 'https://via.placeholder.com/1200x400'" 
-             :alt="productos.length > 0 ? productos[0].nombre : 'Producto destacado'" 
-             id="imagenProductoTop">
-    </div> -->
-
-
-    <div class="container-ultimos-productos">
-        <div v-if="loading" class="loading">Cargando productos...</div>
-        <div v-else class="producto" v-for="producto in productos" :key="producto.id">
-            <img :src="producto.imagen || 'https://via.placeholder.com/240x200'" :alt="producto.nombre">
-            <p>{{ producto.nombre }} - ${{ producto.precio }}</p>
-            <div class="producto-actions">
-                <button @click="verProducto(producto)">
-                    <span class="material-icons">visibility</span>Ver
-                </button>
-                <button @click="agregarAlCarrito(producto)" class="btn-agregar">
-                    <span class="material-icons">add_shopping_cart</span>Agregar
-                </button>
+        <div class="container-fluid category-section text-center">
+            <h3 class="titulo-categorias mb-3">Explora por Categoría</h3>
+            <div class="category-list-wrapper">
+                <div
+                    class="category-item"
+                    v-for="categoria in categorias"
+                    :key="categoria.id"
+                    @click="seleccionarCategoria(categoria.id)"
+                >
+                    <img :src="categoria.imagen" :alt="categoria.nombre" class="category-image" />
+                    <div class="category-name">{{ categoria.nombre }}</div>
+                </div>
             </div>
         </div>
     </div>
 
-
-</div>
+    <ProductModal
+        :producto="productoSeleccionado"
+        v-model:visible="modalVisible"
+    />
 </template>
 
 <script>
-import { UsuarioService, ProductoService, CarritoService, CategoriaService } from '../../private/services';
-import { Notificar } from "../utils/notificaciones";
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import ProductCard from '../components/ProductCard.vue'
+import ProductModal from '../components/ProductModal.vue'
+import { UsuarioService, ProductoService } from '../../private/services'
+import { Notificar } from '../utils/notificaciones'
+import { useCarrito } from '../composables/useCarrito'
+import { useFavoritos } from '../composables/useFavoritos'
+
+import hamburguesaImg from '../assets/hamburguesa.png'
+import pizzaImg from '../assets/pizza.png'
+import gaseosaImg from '../assets/gaseosa.png'
+import heladoImg from '../assets/helado.png'
+import ensaladaImg from '../assets/ensalada.png'
+
 export default {
-  name: 'MainView',
-  data() {
-    return {
-      usuarioLogueado: null,
-      productos: [],
-      categorias: [],
-      carrito: null,
-      carritoItems: [],
-      carritoVisible: false,
-      loading: true,
-      notyf: null
-    }
-  },
-  computed: {
-    carritoCount() {
-      return this.carritoItems ? this.carritoItems.reduce((total, item) => total + item.cantidad, 0) : 0;
-    },
-    carritoTotal() {
-      return this.carritoItems ? this.carritoItems.reduce((total, item) => total + (item.precio * item.cantidad), 0) : 0;
-    }
-  },
-  async mounted() {
-    //esto estaria bueno crear en utils las notificaciones esta que sea mas simple
-    // YA LO HICE
-    await this.inicializarDatos();
-  },
-  methods: {
-    async inicializarDatos() {
-      try {
-        this.loading = true;
+    name: 'MainView',
+    components: { ProductCard, ProductModal },
+    setup() {
+        const router = useRouter()
+
+        const usuarioLogueado = ref(null)
+        const productos = ref([])
+        const categorias = ref([
+            { id: 1, nombre: 'Pizzas', imagen: pizzaImg },
+            { id: 2, nombre: 'Hamburguesas', imagen: hamburguesaImg },
+            { id: 3, nombre: 'Bebidas', imagen: gaseosaImg },
+            { id: 4, nombre: 'Postres', imagen: heladoImg },
+            { id: 5, nombre: 'Ensaladas', imagen: ensaladaImg }
+        ])
+
+        const loading = ref(true)
+        const terminoBusqueda = ref('')
+        const productoSeleccionado = ref(null)
+        const modalVisible = ref(false)
+        const carritoVisible = ref(false)
+
+        const { 
+            carritoItems, 
+            carritoCount, 
+            carritoTotal, 
+            syncCarritoData,
+            agregarAlCarrito: agregarProductoAlCarrito 
+        } = useCarrito()
         
-        // datos de prueba porque mauricio rompio el backennd y ahora no puedo mostrar nada 5 PALABRAS CRACK
-        this.productos = [
-          {
-            id: 1,
-            nombre: "CACHORRO CHUPETAO",
-            precio: 10000000000000000000000000,
-            imagen: "https://imgs.search.brave.com/BiyEV_PxDqG8SH04N9GSnY0s2lBrDArJIe81Ny4QfYM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzL2FmLzgy/LzBhL2FmODIwYTA0/ZWI5MjdlNmUwNWEw/ZDVhMzU2OGE0MDNl/LmpwZw"
-          },
-          {
-            id: 2,
-            nombre: "LA CHABONA",
-            precio: 2.50,
-            imagen: "https://imgs.search.brave.com/nLCzrlw5ZcGh4v3mfncgo57aVXO7jpcaif9tGYCuioo/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5haXJlZGVzYW50/YWZlLmNvbS5hci9w/LzZmMzkzMDk0MDdm/OTBlMDc4YWQ2MWFk/ZjIxYWJkNzdjL2Fk/anVudG9zLzI2OC9p/bWFnZW5lcy8wMDIv/ODQxLzAwMDI4NDE3/MjkvbGEtY2hhYm9u/YS1mdWUtZGVzY3Vi/aWVydGEtbG9zLWJl/c29zLXktbXV5LWhv/dC11bi1mYW1vc28t/aW5mbHVlbmNlci5w/bmc"
-          },
-          {
-            id: 3,
-            nombre: "LA PATO BULLRICH",
-            precio: 3000,
-            imagen: "https://imgs.search.brave.com/Yembk27qmfJgO1WNgwwY3YiTKB7AEFKJh75vJ8Q2UPg/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4x/LmVsZGlhLmNvbS8w/NzIwMTkvMTU2MjE3/NTg1NzAwMC5qcGc"
-          },
-          {
-            id: 4,
-            nombre: "MILEI",
-            precio: 1234,
-            imagen: "https://imgs.search.brave.com/7u98zviMKJDU_hfVneN2H1-Dcb0NppaodcA5AkBdJ_8/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly93d3cu/Y2xhcmluLmNvbS9p/bWcvMjAyNC8wNS8z/MC85Rl80cWJWdTBo/XzIwMDB4MTUwMF9f/MS5qcGc"
-          }
-        ];
-        
-        // si ANDARA se mueve acaDAW
-        try {
-          const usuarioId = localStorage.getItem('usuarioId');
-          if (usuarioId) {
-            const usuario = await UsuarioService.getById(usuarioId);
-            this.usuarioLogueado = usuario.nombre;
-            
-            this.carrito = await CarritoService.getCarritoByUsuario(usuarioId);
-            if (this.carrito) {
-              this.carritoItems = await CarritoService.getItemsByCarrito(this.carrito.id);
+        const { isFavorito, toggleFavorito, syncFavoritos } = useFavoritos(); 
+
+        const inicializarDatos = async () => {
+            loading.value = true
+            productos.value = [] 
+
+            try {
+                const usuarioData = UsuarioService.obtenerUsuario(); 
+                
+                if (usuarioData) {
+                    usuarioLogueado.value = usuarioData.nombre 
+
+                    await syncCarritoData() 
+                    await syncFavoritos()
+                }
+
+                const productosPopulares = await ProductoService.obtenerTodos()
+                productos.value = productosPopulares.map(p => ({
+                    id: p.productoId,
+                    nombre: p.nombre,
+                    precio: p.precio,
+                    descripcion: p.descripcion,
+                    disponibilidad: p.disponibilidad,
+                    imagen: p.imagenes?.[0] || 'https://placehold.co/150' 
+                }))
+            } catch (error) {
+                console.error('Error al cargar datos:', error)
+                Notificar.error('❌ Error al cargar los datos')
+            } finally {
+                loading.value = false
             }
-          }
-          
-          const productosReales = await ProductoService.getProductosPopulares(8);
-          if (productosReales && productosReales.length > 0) {
-            this.productos = productosReales;
-          }
-          
-          this.categorias = await CategoriaService.getCategoriasActivas();
-          
-        } catch (apiError) {
-          
-          Notificar.error('SI LEES ESTO mauri rompio la api xd',10)
-          Notificar.error('por eso ves esos datos WASAAA',10)
         }
-        
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-        if (this.notyf) {
-          this.notyf.error('❌ Error al cargar los datos');
-        }
-      } finally {
-        this.loading = false;
-        
-        Notificar.exito('BIENVENIDO A RAPPI :)')
-      }
-    },
 
-    
+        const seleccionarCategoria = (categoriaId) => {
+            router.push({ name: 'CategoriaView', params: { id: categoriaId } })
+        }
 
-    
-    
-    toggleCarrito() {
-      this.carritoVisible = !this.carritoVisible;
-      const carritoDiv = document.querySelector('.container-carrito-datos');
-      carritoDiv.style.display = this.carritoVisible ? 'block' : 'none';
-    },
-    
-    async verProducto(producto) {
-      console.log('ver producto:', producto);
-      
-    // ACA SE ABRIRIA EL MODAL
-    },
-    
-    async agregarAlCarrito(producto) {
-      try {
-        //simular
-        if (!this.carritoItems) {
-          this.carritoItems = [];
+        const verProducto = (producto) => {
+            productoSeleccionado.value = producto
+            modalVisible.value = true
         }
-        
-        const itemExistente = this.carritoItems.find(item => item.productoId === producto.id);
-        
-        if (itemExistente) {
-          itemExistente.cantidad += 1;
-        } else {
-          this.carritoItems.push({
-            id: Date.now(),
-            productoId: producto.id,
-            producto: producto,
-            cantidad: 1,
-            precio: producto.precio
-          });
-        }
-        
-        Notificar.exito('producto agretgado correctamente ',123) //hija de puta duras lo que queres
-        // si el servicio anda se usa esto
-        try {
-          const usuarioId = localStorage.getItem('usuarioId');
-          if (usuarioId) {
-            if (!this.carrito) {
-              this.carrito = await CarritoService.crearCarritoParaUsuario(usuarioId);
+
+        const agregarAlCarrito = async (producto) => {
+            try {
+                await agregarProductoAlCarrito(producto.id)
+            } catch (error) {
+                console.error('Error al agregar al carrito:', error)
+                Notificar.error('Error al cargar producto al carrito', 3)
             }
-            
-            await CarritoService.agregarItemAlCarrito(this.carrito.id, producto.id, 1);
-            this.carritoItems = await CarritoService.getItemsByCarrito(this.carrito.id);
-            
-            Notificar.exito('api funcionando',10)
-          }
-        } catch (apiError) {
-            Notificar.exito('api sin funcionar (pq mauri rompe todo) y usa lo que creo bruno xd',1330)
-
         }
-        
-      } catch (error) {
-        Notificar.error('Error al cargar producto al carro',10)
-      }
-    }
-  }
 
+        const handleToggleFavorito = async (productoId) => {
+            await toggleFavorito(productoId);
+        }
+
+        const buscarProductos = async () => {
+            if (!terminoBusqueda.value.trim()) {
+                return inicializarDatos()
+            }
+
+            try {
+                const resultados = await ProductoService.buscarProductos(terminoBusqueda.value)
+                productos.value = resultados.map(p => ({
+                    id: p.productoId,
+                    nombre: p.nombre,
+                    precio: p.precio,
+                    descripcion: p.descripcion,
+                    disponibilidad: p.disponibilidad,
+                    imagen: p.imagenes?.[0] || 'https://placehold.co/150'
+                }))
+
+                if (resultados.length === 0) {
+                    Notificar.info('No se encontraron productos')
+                }
+            } catch (error) {
+                console.error('Error al buscar productos:', error)
+                Notificar.error('No se pudieron buscar los productos')
+            }
+        }
+
+        onMounted(() => {
+            inicializarDatos()
+        })
+
+        return {
+            usuarioLogueado,
+            productos,
+            categorias,
+            carritoItems,
+            carritoVisible,
+            loading,
+            carritoCount,
+            carritoTotal,
+            terminoBusqueda,
+            productoSeleccionado,
+            modalVisible,
+            inicializarDatos,
+            seleccionarCategoria,
+            verProducto,
+            agregarAlCarrito,
+            buscarProductos,
+            isFavorito,
+            handleToggleFavorito 
+        }
+    }
 }
 </script>
 
-<style >
-body{
-    background: #fafafa;
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    overflow-x: hidden;
+
+<style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap');
+
+.main-view-background {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
-.nav-bar {
-    background: white;
-    border-radius: 1rem;
-    border-bottom: 1px solid #e0e0e0;
-    margin: 0;
-    padding: 16px 32px;
-    display: flex;
-    gap: 2rem;
-    justify-content: space-between;
-    align-items: center;
-    max-width: 100%;
-    padding: 0px 10px 10px 10px;
-    box-shadow: 0px 10px 22px 1px rgba(255, 0, 0, 0.123);
+.hero-banner-container {
+  background-image: url('../assets/imagen_fondo_principal.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  min-height: 500px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  position: relative;
+  padding: 0 5%;
 }
 
-.nav-bar button {
-    background: none;
-    border: none;
-    border-radius: 4px;
-    padding: 8px 16px;
-    color: #333;
-    font-weight: 400;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-    transition: 0.5s all;
+.hero-banner-container::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.25);
 }
 
-.nav-bar button:hover {
-    background-color:#e0e0e0;
-    transform: scale(1.2);
+.hero-content {
+  max-width: 500px;
+  color: white;
+  z-index: 10;
+  text-align: left;
 }
 
-.container-user {
-    background: none;
-    border-radius: 4px;
-    padding: 12px 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    cursor: pointer;
-    transition: 0.5s all;
-
+.hero-title {
+  font-family: 'Permanent Marker', sans-serif;
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
 }
 
-.container-user:hover {
-    border-color: #333;
+.hero-subtitle {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
 }
 
-.container-user p {
-    margin: 0;
-    color: #333;
-    font-weight: 400;
-    font-size: 13px;
+.search-form-container {
+  display: flex;
+  justify-content: center;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.container-user .material-icons {
-    font-size: 30px;
-    color: #666;
+.input-group {
+  display: flex;
+  width: 100%;
+  max-width: 400px;
 }
 
-.material-icons {
-    font-size: 20px;
-    color: #666;
+.address-input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px 0 0 4px;
+  font-size: 1rem;
+  outline: none;
 }
 
-.container-carrito {
-    position: relative;
+.find-food-button {
+  background-color: #ff9900;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 0 4px 4px 0;
+  transition: background-color 0.2s;
 }
 
-.container-carrito button {
-    background: none;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: 0.5s all;
+.find-food-button:hover {
+  background-color: #e08c00;
 }
 
-.container-carrito button:hover {
-    background-color:#e0e0e0;
-    transform: scale(1.2);
-    rotate: 20deg;
+.titulo-productos {
+  color: #ff9900;
+  font-weight: 700;
+  font-size: 2.5rem;
 }
 
-.container-carrito-datos {
-    position: absolute;
-    top: 50px;
-    right: 0;
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 4px;
-    padding: 16px;
-    min-width: 280px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    z-index: 1000;
+.titulo-categorias {
+  color: #ff9900;
+  font-size: 2rem;
 }
 
-.container-carrito-datos label {
-    font-weight: 500;
-    color: #333;
-    font-size: 14px;
-    display: block;
-    margin-bottom: 12px;
+.category-section {
+  margin-top: 100px;
+  text-align: center;
 }
 
-.container-carrito-datos p {
-    color: #666;
-    margin: 8px 0;
-    font-size: 13px;
+.category-list-wrapper {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 10px 15px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.container-carrousel {
-    max-width: 1200px;
-    margin: 32px auto;
-    border-radius: 0;
-    overflow: hidden;
-    border: 1px solid #e0e0e0;
-    height: 400px;
-    background: #f5f5f5;
+.category-list-wrapper::-webkit-scrollbar {
+  display: none;
 }
 
-.container-carrousel img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.category-item {
+  min-width: 180px;
+  max-width: 220px;
+  margin: 10px;
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
 }
 
-.container-ultimos-productos {
-    max-width: 1200px;
-    margin: 40px auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 24px;
-    padding: 0 32px;
+.category-item:hover {
+  transform: translateY(-5px);
 }
 
-.producto {
-    
-    background: white;
-    border: 1px solid #e0e0e0;
-    border-radius: 1rem;
-    overflow: hidden;
-    transition: border-color 0.2s ease;
-    display: flex;
-    flex-direction: column;
-
-    transition: 0.6s all;
+.category-image {
+  width: 150px;
+  height: auto;
+  max-height: 150px;
+  object-fit: contain;
+  margin-bottom: 12px;
+  transition: transform 0.3s ease;
 }
 
-.producto:hover {
+.category-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.category-item:hover .category-image {
+  transform: scale(1.2);
+}
+
+.navbar {
+  background-color: rgba(73, 32, 5, 0.58);
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1030;
+}
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2rem;
+  }
+  .titulo-productos {
+    font-size: 2rem;
+  }
+  .titulo-categorias {
+    font-size: 1.5rem;
+  }
+  .category-image {
+    width: 100px;
+    max-height: 100px;
+  }
+  .category-item {
+    min-width: 140px;
+    max-width: 160px;
+  }
+  .category-name {
+    font-size: 1rem;
+  }
+  .category-item:hover .category-image {
     transform: scale(1.1);
-    border-color: #333;
-}
-
-.producto img {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-    border-bottom: 1px solid #e0e0e0;
-}
-
-.producto p {
-    padding: 16px;
-    color: #333;
-    font-weight: 400;
-    font-size: 14px;
-    flex-grow: 1;
-    margin: 0;
-}
-
-.producto button {
-    background: white;
-    border: none;
-    border-top: 1px solid #e0e0e0;
-    border-radius: 0;
-    padding: 12px;
-    color: #333;
-    font-weight: 400;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    font-size: 13px;
-}
-
-.producto button:hover {
-    background: #fafafa;
-}
-
-.producto button .material-icons {
-    font-size: 18px;
-}
-
-.carrito-badge {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ff4444;
-    color: white;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.carrito-item {
-    border-bottom: 1px solid #eee;
-    padding: 8px 0;
-}
-
-.carrito-total {
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 2px solid #333;
-}
-
-.producto-actions {
-    display: flex;
-    gap: 0;
-}
-
-.producto-actions button {
-    flex: 1;
-}
-
-.btn-agregar {
-    background: #007bff !important;
-    color: white !important;
-}
-
-.btn-agregar:hover {
-    background: #0056b3 !important;
-}
-
-.loading {
-    text-align: center;
-    padding: 40px;
-    font-size: 18px;
-    color: #666;
+  }
 }
 </style>

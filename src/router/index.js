@@ -1,0 +1,82 @@
+// src/router/index.js
+import { createRouter, createWebHistory } from 'vue-router'
+
+// Importar vistas
+import mainView from '../view/mainView.vue'
+import Perfil from '../view/Perfil.vue'
+import Pedidos from '../view/Pedidos.vue'
+import MisCompras from '../view/MisCompras.vue'
+import Carrito from '../view/Carrito.vue'
+import Favoritos from '../view/Favoritos.vue'
+import Login from '../view/Login.vue'
+import RepartidorDashboard from '../view/RepartidorDashboard.vue'
+import Negocio from '../view/Negocio.vue'
+
+const routes = [
+    {
+        path: '/',
+        name: 'Home',
+        component: mainView,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/perfil',
+        name: 'Perfil',
+        component: Perfil,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/pedidos',
+        name: 'Pedidos',
+        component: Pedidos,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/MisCompras',
+        name: 'MisCompras',
+        component: MisCompras,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/carrito',
+        name: 'Carrito',
+        component: Carrito,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/favoritos',
+        name: 'Favoritos',
+        component: Favoritos,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/negocio',
+        name: 'Negocio',
+        component: Negocio,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/login',
+        name: 'Login',
+        component: Login
+    },
+    {
+        path: '/RepartidorDashboard',
+        name: 'RepartidorDashboard',
+        component: RepartidorDashboard,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/categoria/:id',
+        name: 'CategoriaView',
+        component: () => import('../view/CategoriaView.vue'),
+        meta: { requiresHeader: true }
+    }
+]
+
+const router = createRouter({
+  history: createWebHistory(),
+  routes
+})
+
+export default router
