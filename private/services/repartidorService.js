@@ -2,6 +2,10 @@ import { createCrud } from '../api/crudFactory.js';
 import * as http from '../api/httpClient.js';
 
 const repartidorCrud = createCrud('repartidores');
+const pedidoCrud = createCrud('pedidos');
+const pedidosPendientesCrud = createCrud('pedidos/repartidor/pendientes');
+const pedidosAceptadosCrud = createCrud('pedidos/repartidor/aceptados');
+const pedidosEntregarCrud = createCrud('pedidos'); // Para usar el endpoint /pedidos/:id/entregar
 
 export const RepartidorService = {
   ...repartidorCrud,
@@ -21,10 +25,16 @@ export const RepartidorService = {
   },
 
 
-  // Obtener pedidos de un repartidor
+  // Obtener pedidos de un repartidor (aceptados por el repartidor)
   getPedidosDeRepartidor: async (repartidorId) => {
-    const pedidos = await pedidoCrud.getAll();
-    return pedidos.filter(pedido => pedido.repartidorId === repartidorId);
+    try {
+      const response = await pedidosAceptadosCrud.getAll();
+      // El servidor devuelve { data: [...], limit, page, total, totalPages }
+      return response.data || response || [];
+    } catch (err) {
+      console.error('Error obteniendo pedidos del repartidor:', err);
+      return [];
+    }
   },
 
   // Obtener pedidos activos (en camino) de un repartidor
@@ -33,12 +43,16 @@ export const RepartidorService = {
     return pedidos.filter(pedido => pedido.estado === 'EnCamino');
   },
 
-  // Obtener pedidos disponibles para tomar (para poder usarlo tipo en la vistac donde se muetran todos)
+  // Obtener pedidos disponibles para tomar (pendientes)
   getPedidosDisponibles: async () => {
-    const pedidos = await pedidoCrud.getAll();
-    return pedidos.filter(pedido => 
-      pedido.estado === 'Pendiente' && !pedido.repartidorId
-    );
+    try {
+      const response = await pedidosPendientesCrud.getAll();
+      // El servidor devuelve { data: [...], limit, page, total, totalPages }
+      return response.data || response || [];
+    } catch (err) {
+      console.error('Error obteniendo pedidos disponibles:', err);
+      return [];
+    }
   },
 
   // Obtener repartidor asignado a un pedido
@@ -49,5 +63,25 @@ export const RepartidorService = {
     return await RepartidorService.getRepartidorById(pedido.repartidorId);
   },
 
-   
+  // Marcar pedido como entregado
+  marcarEntregado: async (pedidoId) => {
+    try {
+      return await http.put(`pedidos/${pedidoId}/entregar`, {});
+    } catch (err) {
+      console.error('Error al marcar pedido como entregado:', err);
+      throw err;
+    }
+  },
+
+  // Tomar un pedido pendiente (asignarlo al repartidor)
+  tomarPedido: async (pedidoId) => {
+    try {
+      // El endpoint espera una actualización del pedido: PUT /api/pedidos/:id/tomar
+      return await http.put(`pedidos/${pedidoId}/tomar`, {});
+    } catch (err) {
+      console.error('Error al tomar pedido:', err);
+      throw err;
+    }
+  }
+
 };

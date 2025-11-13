@@ -275,19 +275,18 @@ export default {
         this.cargando = false;
       }
     },
-
+            //ACA HAY QUE CONECTAR
     redirigirSegunRol() {
       const rol = UsuarioService.obtenerRol();
-
       switch(rol) {
         case 'admin':
-          this.$router.push('/admin/dashboard');
+          this.$router.push('/admin');
           break;
         case 'vendedor':
-          this.$router.push('/vendedor/dashboard');
+          this.$router.push('/vendedor');
           break;
         case 'repartidor':
-          this.$router.push('/repartidor/pedidos');
+          this.$router.push('/repartidor');
           break;
         case 'cliente':
         default:

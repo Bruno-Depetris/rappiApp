@@ -1,4 +1,5 @@
-import { createCrud } from '../api/crudFactory.js';
+import { createCrud } from './api/crudFactory.js';
+import { CarritoService } from './carritoService.js';
 
 const carritoCrud = createCrud('carrito');
 const carritoItemCrud = createCrud('carrito/items');
@@ -6,11 +7,8 @@ const carritoCuponCrud = createCrud('carrito/cupones');
 const productoCrud = createCrud('productos');
 
 
-export const CarritoService = {
-  ...carritoCrud,
-
-  // Ver mi carrito (GET /api/carrito)
-
+export const CarritoItemService = {
+  ...carritoItemCrud,
 
   // Vaciar carrito (DELETE /api/carrito/vaciar)
   vaciarCarrito: async () => {
