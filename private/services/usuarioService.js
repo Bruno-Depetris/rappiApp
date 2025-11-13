@@ -91,6 +91,7 @@ export const UsuarioService = {
     return regex.test(email);
   },
 
+
   validarPassword: (password) => {
     return password.length >= 6;
   },
@@ -123,6 +124,9 @@ export const UsuarioService = {
     return await usuarioCrud.getAll();
   },
 
+  getPerfil: async () => {
+  return await http.get('usuarios/perfil');
+  },
   getUsuarioById: async (id) => {
     return await usuarioCrud.getById(id);
   },
