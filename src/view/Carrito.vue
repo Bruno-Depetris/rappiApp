@@ -587,6 +587,94 @@ export default {
   transform: rotate(15deg) scale(1.1);
 }
 
+/* Cupón Section */
+.cupon-section {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.cupon-label {
+  font-weight: 600;
+  color: #333;
+  font-size: 1rem;
+  display: block;
+}
+
+.cupon-input-group {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.cupon-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+  color: #333;
+  letter-spacing: 0.5px;
+}
+
+.cupon-input::placeholder {
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+.cupon-input:focus {
+  outline: none;
+  border-color: #ff9900;
+  background-color: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 153, 0, 0.1);
+}
+
+.cupon-input:hover:not(:focus) {
+  border-color: #ffb84d;
+  background-color: #fff9f0;
+}
+
+.cupon-input:disabled {
+  background-color: #f5f5f5;
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cupon-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.3);
+  white-space: nowrap;
+}
+
+.cupon-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 153, 0, 0.4);
+}
+
+.cupon-btn:active {
+  transform: translateY(0);
+}
+
+.cupon-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: 0 4px 12px rgba(255, 153, 0, 0.2);
+}
+
 /* Métodos de pago */
 .metodo-pago-selector {
   margin-bottom: 1.5rem;
