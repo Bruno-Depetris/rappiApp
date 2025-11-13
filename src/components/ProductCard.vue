@@ -5,10 +5,15 @@
     @mouseleave="flipCard" 
     :class="{ 'flipped': isFlipped }"
   >
-    <!-- Cara frontal -->
     <div class="card-face card-front">
+      <!-- Botón de favorito dentro de la tarjeta (frontal) -->
+      <button 
+        class="btn-favorito" 
+        @click.stop="$emit('toggle-favorito', producto.id)"
+      >
+        <i class="bi" :class="{ 'bi-heart-fill': isFavorito, 'bi-heart': !isFavorito }"></i>
+      </button>
       
-      <!-- Imagen o placeholder -->
       <div v-if="producto.imagen" class="card-image-wrapper">
         <img :src="producto.imagen" :alt="producto.nombre" class="card-img-top" />
         <div class="image-overlay"></div>
@@ -17,7 +22,6 @@
         <i class="bi bi-basket-fill card-placeholder-icon"></i>
       </div>
 
-      <!-- Contenido principal -->
       <div class="card-body">
         <h5 class="card-title">{{ producto.nombre }}</h5>
         <p class="card-text precio">$ {{ producto.precio.toFixed(2) }}</p>
@@ -25,8 +29,15 @@
       </div>
     </div>
 
-    <!-- Cara trasera -->
     <div class="card-face card-back">
+      <!-- Botón de favorito dentro de la tarjeta (trasera) -->
+      <button 
+        class="btn-favorito btn-favorito-back" 
+        @click.stop="$emit('toggle-favorito', producto.id)"
+      >
+        <i class="bi" :class="{ 'bi-heart-fill': isFavorito, 'bi-heart': !isFavorito }"></i>
+      </button>
+
       <div class="card-back-content">
         <h5 class="back-title">Descripción</h5>
         <p class="back-description">{{ producto.descripcion || 'Descripción no disponible.' }}</p>
@@ -60,8 +71,13 @@ export default {
     producto: {
       type: Object,
       required: true
+    },
+    isFavorito: {
+      type: Boolean,
+      default: false
     }
   },
+  emits: ['ver', 'agregar', 'toggle-favorito'],
   data() {
     return {
       isFlipped: false
@@ -123,6 +139,74 @@ export default {
 
 .flipped .card-back {
   transform: rotateY(0deg);
+}
+
+/* Botón de favorito */
+.btn-favorito {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 45px;
+  height: 45px;
+  background: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-favorito i {
+  font-size: 1.3rem;
+  color: #ff6b35;
+  transition: all 0.3s ease;
+}
+
+.btn-favorito:hover {
+  transform: scale(1.15);
+  box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+}
+
+.btn-favorito .bi-heart-fill {
+  color: #ff6b35;
+  animation: heartBeat 0.5s ease;
+}
+
+.btn-favorito .bi-heart:hover {
+  transform: scale(1.1);
+}
+
+/* Estilo especial para el botón en la cara trasera */
+.btn-favorito-back {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.btn-favorito-back i {
+  color: #ff6b35;
+}
+
+.btn-favorito-back:hover {
+  background: white;
+}
+
+/* Animación del corazón */
+@keyframes heartBeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.3);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  75% {
+    transform: scale(1.2);
+  }
 }
 
 /* Imagen del producto */
@@ -355,6 +439,15 @@ export default {
     width: 100%;
     max-width: 280px;
     height: 380px;
+  }
+
+  .btn-favorito {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-favorito i {
+    font-size: 1.1rem;
   }
 }
 </style>

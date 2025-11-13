@@ -9,6 +9,11 @@ export const CarritoService = {
   vaciarCarrito: async () => {
     return await carritoCrud.delete('vaciar');
   },
+
+  getMiCarrito: async () => {
+    // ✅ CORRECCIÓN: Usamos getAll() para llamar a GET /api/carrito
+    return await carritoCrud.getAll(); 
+  },
   
   // Obtener items del carrito
   getItems: async () => {

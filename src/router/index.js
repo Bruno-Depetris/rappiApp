@@ -11,48 +11,54 @@ import Favoritos from '../view/Favoritos.vue'
 import Login from '../view/Login.vue'
 
 const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: mainView
-  },
-  {
-    path: '/perfil',
-    name: 'Perfil',
-    component: Perfil
-  },
-  {
-    path: '/pedidos',
-    name: 'Pedidos',
-    component: Pedidos
-  },
-  {
-    path: '/mis-compras',
-    name: 'MisCompras',
-    component: MisCompras
-  },
-  {
-    path: '/carrito',
-    name: 'Carrito',
-    component: Carrito
-  },
-  {
-    path: '/favoritos',
-    name: 'Favoritos',
-    component: Favoritos
-  },
-  {
-    path: '/login',
-    name: 'Login',
-    component: Login
-  },
-  {
-    path: '/categoria/:id',
-    name: 'CategoriaView',
-    component: () => import('../view/CategoriaView.vue')
-  }
-
-
+    {
+        path: '/',
+        name: 'Home',
+        component: mainView,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/perfil',
+        name: 'Perfil',
+        component: Perfil,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/pedidos',
+        name: 'Pedidos',
+        component: Pedidos,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/mis-compras',
+        name: 'MisCompras',
+        component: MisCompras,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/carrito',
+        name: 'Carrito',
+        component: Carrito,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/favoritos',
+        name: 'Favoritos',
+        component: Favoritos,
+        meta: { requiresHeader: true }
+    },
+    {
+        path: '/login',
+        name: 'Login',
+        component: Login
+        // NOTA: No agregamos 'meta: { requiresHeader: true }' aquí.
+    },
+    {
+        path: '/categoria/:id',
+        name: 'CategoriaView',
+        component: () => import('../view/CategoriaView.vue'),
+        meta: { requiresHeader: true }
+    }
 ]
 
 const router = createRouter({

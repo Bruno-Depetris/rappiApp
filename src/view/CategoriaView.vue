@@ -54,6 +54,7 @@ import { useRoute } from 'vue-router';
 import ProductCard from '../components/ProductCard.vue';
 import ProductModal from '../components/ProductModal.vue';
 import { ProductoService } from '../../private/services';
+import { CategoriaProductoService } from '../../private/services';
 import { Notificar } from "../utils/notificaciones";
 
 import catPizzaHeader from '../assets/imagenHeaderCategoria/catPizzaHeader.jpg';
@@ -92,7 +93,8 @@ export default {
         categoriaNombre.value = info?.nombre || 'Categoría';
         categoriaImagen.value = info?.imagen || 'https://via.placeholder.com/600x200';
 
-        const productosPorCategoria = await ProductoService.getProductosByCategoria(categoriaId);
+        const productosPorCategoria = await CategoriaProductoService.getProductosPorCategoria(categoriaId);
+        console.log("Productos filtrados:", productosPorCategoria); // <-- Revisa la consola (F12)
         productos.value = productosPorCategoria.map(p => ({
           id: p.productoId,
           nombre: p.nombre,

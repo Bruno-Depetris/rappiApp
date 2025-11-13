@@ -1,12 +1,10 @@
 <template>
   <nav class="navbar navbar-expand-lg py-3">
     <div class="container-fluid">
-      <!-- Título -->
       <router-link class="navbar-brand text-white fw-bold" to="/">
         <i class="bi bi-basket-fill me-2"></i>Rappi
       </router-link>
 
-      <!-- Botón hamburguesa para móviles -->
       <button
         class="navbar-toggler"
         type="button"
@@ -19,7 +17,6 @@
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <!-- Menú -->
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto align-items-lg-center">
           <li class="nav-item mx-2">
@@ -48,9 +45,13 @@
             </router-link>
           </li>
           <li class="nav-item mx-2">
-            <router-link class="nav-link d-flex align-items-center" to="/login">
+            <a 
+              class="nav-link d-flex align-items-center" 
+              href="#" 
+              @click.prevent="cerrarSesion"
+            >
               <i class="bi bi-box-arrow-right me-1"></i>Cerrar Sesión
-            </router-link>
+            </a>
           </li>
         </ul>
       </div>
@@ -59,12 +60,34 @@
 </template>
 
 <script>
+import { useRouter } from 'vue-router'; // Importamos useRouter para navegar
+
 export default {
   name: "HeaderNav",
+  setup() {
+    const router = useRouter();
+
+    const cerrarSesion = () => {
+      // 1. ELIMINAR CREDENCIALES
+      // Borrar el token y cualquier ID de usuario del almacenamiento local
+      localStorage.removeItem('rappi_token');
+      localStorage.removeItem('usuarioId'); 
+      localStorage.removeItem('rappi_usuario'); // Si también guardas el objeto usuario completo
+
+      // 2. NAVEGAR AL LOGIN
+      // Redirigir al usuario a la vista de login
+      router.push({ name: 'Login' });
+    };
+
+    return {
+      cerrarSesion, // Hacemos el método disponible en el template
+    };
+  },
 };
 </script>
 
 <style scoped>
+/* Tu CSS se mantiene igual */
 .navbar {
   background-color: #7b421c00; /* fondo naranja */
   backdrop-filter: blur(10px);
@@ -109,5 +132,4 @@ export default {
   padding-right: 10px; /* más espacio a la derecha */
   padding-left: 50px; /* opcional, por simetría */
 }
-
 </style>

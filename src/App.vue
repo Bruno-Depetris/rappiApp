@@ -1,6 +1,7 @@
-<template>
+<template> 
   <div>
     <HeaderNav
+      v-if="$route.meta.requiresHeader !== false && $route.meta.requiresHeader !== undefined"
       :usuario-logueado="usuarioLogueado"
       :carrito-items="carritoItems"
       :carrito-visible.sync="carritoVisible"
@@ -10,14 +11,17 @@
 </template>
 
 <script setup>
-// import HelloWorld from './components/HelloWorld.vue'
-import mainView from './view/mainView.vue';
-</script>
+import { ref } from 'vue'
+import HeaderNav from './components/HeaderNav.vue'
+import { useRoute } from 'vue-router';
 
-<template>
-  <mainView/>
-  <!-- <HelloWorld msg="Vite + Vue" /> -->
-</template>
+// Variables globales si las necesitás
+const usuarioLogueado = ref(null)
+const carritoItems = ref([])
+const carritoVisible = ref(false)
+
+const route = useRoute();
+</script>
 
 <style scoped>
 </style>

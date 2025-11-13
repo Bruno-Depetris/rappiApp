@@ -1,142 +1,205 @@
 <template>
-  <div class="auth-container">
-    <div class="auth-card">
-      <!-- Pestañas -->
-      <div class="tabs">
-        <button 
-          :class="['tab', { active: modo === 'login' }]"
-          @click="cambiarModo('login')"
-        >
-          Iniciar Sesión
-        </button>
-        <button 
-          :class="['tab', { active: modo === 'register' }]"
-          @click="cambiarModo('register')"
-        >
-          Registrarse
-        </button>
+  <div class="auth-view-background">
+    <!-- Hero Section -->
+    <div class="auth-hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <h1 class="hero-title">¡Bienvenido!</h1>
+        <p class="hero-subtitle">Tu comida favorita a un click de distancia</p>
       </div>
+    </div>
 
-      <h1>{{ modo === 'login' ? 'Bienvenido' : 'Crear Cuenta' }}</h1>
-      <p class="subtitle">
-        {{ modo === 'login' ? 'Inicia sesión en Rappi Clone' : 'Regístrate en Rappi Clone' }}
-      </p>
+    <!-- Container Principal -->
+    <div class="container auth-container">
+      <div class="auth-card">
+        <!-- Pestañas -->
+        <div class="tabs">
+          <button 
+            :class="['tab', { active: modo === 'login' }]"
+            @click="cambiarModo('login')"
+          >
+            <span class="tab-icon"></span>
+            <span>Iniciar Sesión</span>
+          </button>
+          <button 
+            :class="['tab', { active: modo === 'register' }]"
+            @click="cambiarModo('register')"
+          >
+            <span class="tab-icon"></span>
+            <span>Registrarse</span>
+          </button>
+        </div>
 
-      <!-- Mensaje de error -->
-      <div v-if="error" class="error-message">
-        {{ error }}
+        <div class="card-header">
+          <h2 class="card-title">{{ modo === 'login' ? '¡Hola de nuevo!' : 'Crear Cuenta' }}</h2>
+          <p class="card-subtitle">
+            {{ modo === 'login' ? 'Ingresa tus datos para continuar' : 'Completa el formulario para registrarte' }}
+          </p>
+        </div>
+
+        <!-- Mensaje de error -->
+        <div v-if="error" class="alert alert-error">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ error }}</span>
+        </div>
+
+        <!-- Mensaje de éxito -->
+        <div v-if="success" class="alert alert-success">
+          <span class="alert-icon">✓</span>
+          <span>{{ success }}</span>
+        </div>
+
+        <!-- Formulario de Login -->
+        <form v-if="modo === 'login'" @submit.prevent="handleLogin" class="auth-form">
+          <div class="form-group">
+            <label for="login-email">
+              <span class="label-icon"></span>
+              Email
+            </label>
+            <input
+              id="login-email"
+              v-model="loginForm.email"
+              type="email"
+              placeholder="tu@email.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="login-password">
+              <span class="label-icon"></span>
+              Contraseña
+            </label>
+            <input
+              id="login-password"
+              v-model="loginForm.password"
+              type="password"
+              placeholder="••••••••"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn-submit"
+            :disabled="cargando"
+          >
+            <span v-if="!cargando">
+              <span>Iniciar Sesión</span>
+              <span class="btn-arrow">→</span>
+            </span>
+            <span v-else class="loading-spinner">
+              <span class="spinner"></span>
+              Iniciando sesión...
+            </span>
+          </button>
+        </form>
+
+        <!-- Formulario de Register -->
+        <form v-else @submit.prevent="handleRegister" class="auth-form">
+          <div class="form-group">
+            <label for="register-nombre">
+              <span class="label-icon">👤</span>
+              Nombre Completo
+            </label>
+            <input
+              id="register-nombre"
+              v-model="registerForm.nombre"
+              type="text"
+              placeholder="Juan Pérez"
+              autocomplete="name"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="register-email">
+              <span class="label-icon">📧</span>
+              Email
+            </label>
+            <input
+              id="register-email"
+              v-model="registerForm.email"
+              type="email"
+              placeholder="tu@email.com"
+              autocomplete="email"
+              required
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="register-password">
+                <span class="label-icon">🔒</span>
+                Contraseña
+              </label>
+              <input
+                id="register-password"
+                v-model="registerForm.password"
+                type="password"
+                placeholder="Mínimo 6 caracteres"
+                autocomplete="new-password"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="register-confirm">
+                <span class="label-icon">✓</span>
+                Confirmar
+              </label>
+              <input
+                id="register-confirm"
+                v-model="registerForm.confirmPassword"
+                type="password"
+                placeholder="Repite tu contraseña"
+                autocomplete="new-password"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="register-direccion">
+              <span class="label-icon">📍</span>
+              Dirección
+            </label>
+            <input
+              id="register-direccion"
+              v-model="registerForm.direccion"
+              type="text"
+              placeholder="Calle Falsa 123, Ciudad"
+              autocomplete="street-address"
+              required
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            class="btn-submit"
+            :disabled="cargando"
+          >
+            <span v-if="!cargando">
+              <span>Crear Cuenta</span>
+              <span class="btn-arrow">→</span>
+            </span>
+            <span v-else class="loading-spinner">
+              <span class="spinner"></span>
+              Registrando...
+            </span>
+          </button>
+        </form>
+
+        <!-- Footer del card -->
+        <div class="card-footer">
+          <div class="footer-info">
+            <span class="footer-icon">🔒</span>
+            <span class="footer-text">Tus datos están seguros con nosotros</span>
+          </div>
+        </div>
       </div>
-
-      <!-- Mensaje de éxito -->
-      <div v-if="success" class="success-message">
-        {{ success }}
-      </div>
-
-      <!-- Formulario de Login -->
-      <form v-if="modo === 'login'" @submit.prevent="handleLogin">
-        <div class="form-group">
-          <label for="login-email">Email</label>
-          <input
-            id="login-email"
-            v-model="loginForm.email"
-            type="email"
-            placeholder="tu@email.com"
-            autocomplete="email"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="login-password">Contraseña</label>
-          <input
-            id="login-password"
-            v-model="loginForm.password"
-            type="password"
-            placeholder="••••••••"
-            autocomplete="current-password"
-            required
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          class="btn-submit"
-          :disabled="cargando"
-        >
-          {{ cargando ? 'Iniciando sesión...' : 'Iniciar Sesión' }}
-        </button>
-      </form>
-
-      <!-- Formulario de Register -->
-      <form v-else @submit.prevent="handleRegister">
-        <div class="form-group">
-          <label for="register-nombre">Nombre Completo</label>
-          <input
-            id="register-nombre"
-            v-model="registerForm.nombre"
-            type="text"
-            placeholder="Juan Pérez"
-            autocomplete="name"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="register-email">Email</label>
-          <input
-            id="register-email"
-            v-model="registerForm.email"
-            type="email"
-            placeholder="tu@email.com"
-            autocomplete="email"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="register-password">Contraseña</label>
-          <input
-            id="register-password"
-            v-model="registerForm.password"
-            type="password"
-            placeholder="Mínimo 6 caracteres"
-            autocomplete="new-password"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="register-confirm">Confirmar Contraseña</label>
-          <input
-            id="register-confirm"
-            v-model="registerForm.confirmPassword"
-            type="password"
-            placeholder="Repite tu contraseña"
-            autocomplete="new-password"
-            required
-          />
-        </div>
-
-        <div class="form-group">
-          <label for="register-direccion">Dirección</label>
-          <input
-            id="register-direccion"
-            v-model="registerForm.direccion"
-            type="text"
-            placeholder="Calle Falsa 123, Ciudad"
-            autocomplete="street-address"
-            required
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          class="btn-submit"
-          :disabled="cargando"
-        >
-          {{ cargando ? 'Registrando...' : 'Crear Cuenta' }}
-        </button>
-      </form>
     </div>
   </div>
 </template>
@@ -148,7 +211,7 @@ export default {
   name: 'AuthView',
   data() {
     return {
-      modo: 'login', // 'login' o 'register'
+      modo: 'login',
       loginForm: {
         email: '',
         password: ''
@@ -235,13 +298,11 @@ export default {
         this.success = '';
         this.cargando = true;
 
-        // Validar que las contraseñas coincidan
         if (this.registerForm.password !== this.registerForm.confirmPassword) {
           this.error = 'Las contraseñas no coinciden';
           return;
         }
 
-        // Validar formulario completo
         const validacion = UsuarioService.validarRegistro({
           nombre: this.registerForm.nombre,
           email: this.registerForm.email,
@@ -254,7 +315,6 @@ export default {
           return;
         }
 
-        // Registrar usuario
         await UsuarioService.register(
           this.registerForm.nombre,
           this.registerForm.email,
@@ -314,141 +374,318 @@ export default {
 </script>
 
 <style scoped>
-.auth-container {
+@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+.auth-view-background {
   min-height: 100vh;
+  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  padding-bottom: 60px;
+}
+
+/* Hero Section */
+.auth-hero {
+  background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200');
+  background-size: cover;
+  background-position: center;
+  height: 350px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 20px;
+  justify-content: center;
+  position: relative;
+  margin-bottom: -80px;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.7) 100%);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  color: white;
+}
+
+.hero-title {
+  font-family: 'Permanent Marker', sans-serif;
+  font-size: 3.5rem;
+  margin-bottom: 0.5rem;
+  text-shadow: 2px 4px 8px rgba(0, 0, 0, 0.4);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.hero-subtitle {
+  font-size: 1.3rem;
+  font-weight: 300;
+  text-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3);
+  animation: fadeInUp 0.8s ease-out;
+}
+
+/* Container */
+.auth-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 20px;
+  position: relative;
+  z-index: 100;
 }
 
 .auth-card {
   background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  width: 100%;
-  max-width: 450px;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: fadeInUp 0.7s ease-out;
 }
 
 /* Pestañas */
 .tabs {
   display: flex;
+  padding: 10px;
+  background: #f8f9fa;
   gap: 10px;
-  margin-bottom: 30px;
 }
 
 .tab {
   flex: 1;
-  padding: 12px;
-  background: #f5f5f5;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  padding: 14px 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.tab.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.tab-icon {
+  font-size: 1.2rem;
 }
 
 .tab:hover:not(.active) {
-  background: #e0e0e0;
+  background: #fafafa;
+  border-color: #ff9900;
+  transform: translateY(-2px);
 }
 
-h1 {
-  margin: 0 0 10px 0;
+.tab.active {
+  background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
+  color: white;
+  border-color: #ff9900;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+}
+
+/* Card Header */
+.card-header {
+  padding: 30px 40px 20px;
+  text-align: center;
+}
+
+.card-title {
+  font-size: 2rem;
+  font-weight: 700;
   color: #333;
-  text-align: center;
+  margin-bottom: 0.5rem;
 }
 
-.subtitle {
-  text-align: center;
+.card-subtitle {
   color: #666;
-  margin-bottom: 30px;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Alertas */
+.alert {
+  margin: 0 40px 20px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  animation: slideIn 0.4s ease-out;
+}
+
+.alert-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.alert-error {
+  background: #fee;
+  color: #c33;
+  border-left: 4px solid #c33;
+}
+
+.alert-success {
+  background: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+}
+
+/* Formulario */
+.auth-form {
+  padding: 0 40px 30px;
+  animation: fadeIn 0.4s ease;
 }
 
 .form-group {
   margin-bottom: 20px;
 }
 
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
 label {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
   color: #333;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.label-icon {
+  font-size: 1.1rem;
 }
 
 input {
   width: 100%;
-  padding: 12px;
+  padding: 14px 16px;
   border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: border-color 0.3s;
-  box-sizing: border-box;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #fafafa;
 }
 
 input:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #ff9900;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(255, 153, 0, 0.1);
 }
 
+input::placeholder {
+  color: #aaa;
+}
+
+/* Botón Submit */
 .btn-submit {
   width: 100%;
-  padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 16px;
+  background: linear-gradient(135deg, #ff9900 0%, #ff7700 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.3s ease;
   margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(255, 153, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-submit span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-arrow {
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
 }
 
 .btn-submit:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 25px rgba(255, 153, 0, 0.4);
+}
+
+.btn-submit:hover:not(:disabled) .btn-arrow {
+  transform: translateX(5px);
 }
 
 .btn-submit:disabled {
-  opacity: 0.6;
+  opacity: 0.7;
   cursor: not-allowed;
+  transform: none;
 }
 
-.error-message {
-  background: #fee;
-  color: #c33;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border-left: 4px solid #c33;
-  animation: slideIn 0.3s ease;
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-.success-message {
-  background: #efe;
-  color: #3c3;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border-left: 4px solid #3c3;
-  animation: slideIn 0.3s ease;
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
 }
 
-@keyframes slideIn {
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Card Footer */
+.card-footer {
+  background: #f8f9fa;
+  padding: 20px 40px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.footer-icon {
+  font-size: 1.2rem;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
@@ -456,17 +693,83 @@ input:focus {
   }
 }
 
-/* Transiciones suaves entre formularios */
-form {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
+@keyframes slideIn {
   from {
     opacity: 0;
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auth-hero {
+    height: 250px;
+    margin-bottom: -60px;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .card-header,
+  .auth-form,
+  .card-footer {
+    padding-left: 25px;
+    padding-right: 25px;
+  }
+
+  .alert {
+    margin-left: 25px;
+    margin-right: 25px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .card-title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-hero {
+    height: 200px;
+    margin-bottom: -40px;
+  }
+
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .tabs {
+    flex-direction: column;
+  }
+
+  .tab {
+    padding: 12px 16px;
+    font-size: 0.95rem;
+  }
+
+  .card-header,
+  .auth-form,
+  .card-footer {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .alert {
+    margin-left: 20px;
+    margin-right: 20px;
+    padding: 12px 15px;
   }
 }
 </style>

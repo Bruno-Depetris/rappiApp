@@ -13,11 +13,29 @@ export const CategoriaProductoService = {
       cat.nombre.toLowerCase().includes(nombre.toLowerCase())
     );
   },
-
+/* 
   // Obtener productos por categoría
   getProductosPorCategoria: async (categoriaId) => {
-    const productos = await productoCrud.getAll();
-    return productos.filter(producto => producto.categoriaId === categoriaId);
+      const productos = await productoCrud.getAll();
+
+      return productos.filter(producto => 
+          parseInt(producto.CategoriaProductoId) === categoriaId 
+      );
+  }, */
+
+  async getProductosPorCategoria(categoriaId) {
+    try {
+      let productos = await productoCrud.getAll();
+
+      if (productos.data) productos = productos.data;
+      if (!Array.isArray(productos)) throw new Error("La respuesta no es un array de productos");
+
+      // Filtrar por categoriaProductoId
+      return productos.filter(p => p.categoriaProductoId === categoriaId);
+    } catch (error) {
+      console.error("Error al filtrar productos por categoría:", error);
+      throw error;
+    }
   },
 
   // Obtener categoría de un producto específico

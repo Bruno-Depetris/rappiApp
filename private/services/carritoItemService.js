@@ -6,7 +6,7 @@ const carritoCuponCrud = createCrud('carrito/cupones');
 const productoCrud = createCrud('productos');
 
 
-export const CarritoService = {
+export const CarritoItemService = {
   ...carritoCrud,
 
   // Ver mi carrito (GET /api/carrito)
@@ -16,6 +16,11 @@ export const CarritoService = {
   vaciarCarrito: async () => {
     return await carritoCrud.delete('vaciar');
   },
+
+  getMiCarrito: async () => {
+    // ✅ CORRECCIÓN: Usamos getAll() para llamar a GET /api/carrito
+    return await carritoCrud.getAll(); 
+  },
 
   
   // Obtener items del carrito
@@ -41,7 +46,8 @@ export const CarritoService = {
 
   // Eliminar item (DELETE /api/carrito/items/:id)
   eliminarItem: async (itemId) => {
-    return await carritoItemCrud.delete(itemId);
+    const itemsCrud = createCrud('carrito/items');
+    return await itemsCrud.delete(itemId);
   },
 
   // ==================== GESTIÓN DE CUPONES ====================

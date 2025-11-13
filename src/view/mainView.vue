@@ -1,231 +1,219 @@
 <template>
-  <div class="main-view-background">
-
-
-    <div class="hero-banner-container">
-      <div class="hero-content">
-        <h1 class="hero-title">¿Tenes Hambre?</h1>
-        <p class="hero-subtitle">Encuentra los platos más cercanos a ti.</p>
-        <div class="search-form-container">
-          <div class="input-group">
-            <input type="text" placeholder="Busca un producto..." v-model="terminoBusqueda" class="address-input" />
-            <button class="find-food-button" @click="buscarProductos">Buscar Comida</button>
-          </div>
+    <div class="main-view-background">
+        <div class="hero-banner-container">
+            <div class="hero-content">
+                <h1 class="hero-title">¿Tenés Hambre?</h1>
+                <p class="hero-subtitle">Encuentra los platos más cercanos a ti.</p>
+                <div class="search-form-container">
+                    <div class="input-group">
+                        <input type="text" placeholder="Busca un producto..." v-model="terminoBusqueda" class="address-input" />
+                        <button class="find-food-button" @click="buscarProductos">Buscar Comida</button>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <div class="container mt-5 text-center">
+            <h2 class="titulo-productos mb-5">Nuestros Productos Destacados</h2>
+            <div class="row justify-content-center">
+                <div
+                    class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center"
+                    v-for="producto in productos"
+                    :key="producto.id"
+                >
+                    <ProductCard
+                        :producto="producto"
+                        :is-favorito="isFavorito(producto.id)"
+                        @ver="verProducto"
+                        @agregar="agregarAlCarrito"
+                        @toggle-favorito="handleToggleFavorito"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid category-section text-center">
+            <h3 class="titulo-categorias mb-3">Explora por Categoría</h3>
+            <div class="category-list-wrapper">
+                <div
+                    class="category-item"
+                    v-for="categoria in categorias"
+                    :key="categoria.id"
+                    @click="seleccionarCategoria(categoria.id)"
+                >
+                    <img :src="categoria.imagen" :alt="categoria.nombre" class="category-image" />
+                    <div class="category-name">{{ categoria.nombre }}</div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="container mt-5 text-center">
-      <h2 class="titulo-productos mb-5">Nuestros Productos Destacados</h2>
-      <div class="row justify-content-center">
-        <div
-          class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4 d-flex justify-content-center"
-          v-for="producto in productos"
-          :key="producto.id"
-        >
-          <ProductCard
-            :producto="producto"
-            @ver="verProducto"
-            @agregar="agregarAlCarrito"
-          />
-        </div>
-      </div>
-    </div>
-
-    <div class="container-fluid category-section text-center">
-      <h3 class="titulo-categorias mb-3">Explora por Categoría</h3>
-      <div class="category-list-wrapper">
-        <div
-          class="category-item"
-          v-for="categoria in categorias"
-          :key="categoria.id"
-          @click="seleccionarCategoria(categoria.id)"
-        >
-          <img :src="categoria.imagen" :alt="categoria.nombre" class="category-image" />
-          <div class="category-name">{{ categoria.nombre }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <ProductModal
-    :producto="productoSeleccionado"
-    v-model:visible="modalVisible"
-  />
+    <ProductModal
+        :producto="productoSeleccionado"
+        v-model:visible="modalVisible"
+    />
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import HeaderNav from '../components/HeaderNav.vue';
-import ProductCard from '../components/ProductCard.vue';
-import ProductModal from '../components/ProductModal.vue';
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import ProductCard from '../components/ProductCard.vue'
+import ProductModal from '../components/ProductModal.vue'
+import { UsuarioService, ProductoService } from '../../private/services'
+import { Notificar } from '../utils/notificaciones'
+import { useCarrito } from '../composables/useCarrito'
+import { useFavoritos } from '../composables/useFavoritos'
 
-import { UsuarioService, ProductoService, CarritoService, CategoriaService } from '../../private/services';
+import hamburguesaImg from '../assets/hamburguesa.png'
+import pizzaImg from '../assets/pizza.png'
+import gaseosaImg from '../assets/gaseosa.png'
+import heladoImg from '../assets/helado.png'
+import ensaladaImg from '../assets/ensalada.png'
 
-import { Notificar } from "../utils/notificaciones";
 export default {
-  name: 'MainView',
-  components: { HeaderNav, ProductCard, ProductModal },
-  setup() {
-    const router = useRouter();
-    
-    const usuarioLogueado = ref(null);
-    const productos = ref([]);
-    const categorias = ref([
-      { id: 1, nombre: "Pizzas", imagen: pizzaImg },
-      { id: 2, nombre: "Hamburguesas", imagen: hamburguesaImg },
-      { id: 3, nombre: "Bebidas", imagen: gaseosaImg },
-      { id: 4, nombre: "Postres", imagen: heladoImg },
-      { id: 5, nombre: "Ensaladas", imagen: ensaladaImg },
-    ]);
-    const carrito = ref(null);
-    const carritoItems = ref([]);
-    const carritoVisible = ref(false);
-    const loading = ref(true);
-    const terminoBusqueda = ref('');
-    const productoSeleccionado = ref(null);
-    const modalVisible = ref(false);
+    name: 'MainView',
+    components: { ProductCard, ProductModal },
+    setup() {
+        const router = useRouter()
 
-    const carritoCount = computed(() => 
-      carritoItems.value.reduce((total, item) => total + item.cantidad, 0)
-    );
+        const usuarioLogueado = ref(null)
+        const productos = ref([])
+        const categorias = ref([
+            { id: 1, nombre: 'Pizzas', imagen: pizzaImg },
+            { id: 2, nombre: 'Hamburguesas', imagen: hamburguesaImg },
+            { id: 3, nombre: 'Bebidas', imagen: gaseosaImg },
+            { id: 4, nombre: 'Postres', imagen: heladoImg },
+            { id: 5, nombre: 'Ensaladas', imagen: ensaladaImg }
+        ])
 
-    const carritoTotal = computed(() =>
-      carritoItems.value.reduce((total, item) => total + item.precio * item.cantidad, 0)
-    );
+        const loading = ref(true)
+        const terminoBusqueda = ref('')
+        const productoSeleccionado = ref(null)
+        const modalVisible = ref(false)
+        const carritoVisible = ref(false)
 
-    const inicializarDatos = async () => {
-      loading.value = true;
-      productos.value = [{ id: 1, nombre: "CARGANDO...", precio: 0, imagen: "https://via.placeholder.com/150" }];
+        const { 
+            carritoItems, 
+            carritoCount, 
+            carritoTotal, 
+            syncCarritoData,
+            agregarAlCarrito: agregarProductoAlCarrito 
+        } = useCarrito()
+        
+        const { isFavorito, toggleFavorito, syncFavoritos } = useFavoritos(); // 🚨 Favoritos
 
-      try {
-        const usuarioId = localStorage.getItem('usuarioId');
-        if (usuarioId) {
-          const usuario = await UsuarioService.getById(usuarioId);
-          usuarioLogueado.value = usuario.nombre;
+        const inicializarDatos = async () => {
+            loading.value = true
+            productos.value = [] // Limpiamos la lista mientras carga
 
-          carrito.value = await CarritoService.getCarritoByUsuario(usuarioId);
-          if (carrito.value) {
-            carritoItems.value = await CarritoService.getItemsByCarrito(carrito.value.id);
-          }
+            try {
+                // 1. Obtener datos de usuario
+                const usuarioData = UsuarioService.obtenerUsuario(); 
+                
+                if (usuarioData) {
+                    usuarioLogueado.value = usuarioData.nombre 
+                    
+                    // 2. Sincronizar estados dependientes del usuario
+                    await syncCarritoData() 
+                    await syncFavoritos() // 🚨 Sincronizar Favoritos
+                }
+
+                // 3. Carga de productos destacados
+                const productosPopulares = await ProductoService.obtenerTodos()
+                productos.value = productosPopulares.map(p => ({
+                    id: p.productoId,
+                    nombre: p.nombre,
+                    precio: p.precio,
+                    descripcion: p.descripcion,
+                    disponibilidad: p.disponibilidad,
+                    // Asumiendo que p.imagenes[0] es la URL de la imagen (completa o relativa)
+                    imagen: p.imagenes?.[0] || 'https://placehold.co/150' 
+                }))
+            } catch (error) {
+                console.error('Error al cargar datos:', error)
+                Notificar.error('❌ Error al cargar los datos')
+            } finally {
+                loading.value = false
+            }
+        }
+
+        const seleccionarCategoria = (categoriaId) => {
+            router.push({ name: 'CategoriaView', params: { id: categoriaId } })
+        }
+
+        const verProducto = (producto) => {
+            productoSeleccionado.value = producto
+            modalVisible.value = true
+        }
+
+        const agregarAlCarrito = async (producto) => {
+            try {
+                await agregarProductoAlCarrito(producto.id)
+            } catch (error) {
+                console.error('Error al agregar al carrito:', error)
+                Notificar.error('Error al cargar producto al carrito', 3)
+            }
         }
         
-        const productosPopulares = await ProductoService.obtenerTodos();
-        productos.value = productosPopulares.map(p => ({
-          id: p.productoId,
-          nombre: p.nombre,
-          precio: p.precio,
-          descripcion: p.descripcion,
-          disponibilidad: p.disponibilidad,
-          imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
-        }));
-
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-        Notificar.error('❌ Error al cargar los datos');
-      } finally {
-        loading.value = false;
-      }
-    };
-
-    const seleccionarCategoria = (categoriaId) => {
-      router.push({ name: 'CategoriaView', params: { id: categoriaId } });
-    };
-
-    const toggleCarrito = () => {
-      carritoVisible.value = !carritoVisible.value;
-      const carritoDiv = document.querySelector('.container-carrito-datos');
-      if (carritoDiv) carritoDiv.style.display = carritoVisible.value ? 'block' : 'none';
-    };
-
-    const verProducto = (producto) => {
-      productoSeleccionado.value = producto;
-      modalVisible.value = true;
-    };
-
-    const agregarAlCarrito = async (producto) => {
-      try {
-        const itemExistente = carritoItems.value.find(item => item.productoId === producto.id);
-        if (itemExistente) {
-          itemExistente.cantidad += 1;
-        } else {
-          carritoItems.value.push({
-            id: Date.now(),
-            productoId: producto.id,
-            producto,
-            cantidad: 1,
-            precio: producto.precio
-          });
+        // 🚨 Función Handler para el botón de favorito
+        const handleToggleFavorito = async (productoId) => {
+            await toggleFavorito(productoId);
         }
 
-        const usuarioId = localStorage.getItem('usuarioId');
-        if (usuarioId) {
-          if (!carrito.value) carrito.value = await CarritoService.crearCarritoParaUsuario(usuarioId);
-          await CarritoService.agregarItemAlCarrito(carrito.value.id, producto.id, 1);
-          carritoItems.value = await CarritoService.getItemsByCarrito(carrito.value.id);
+        const buscarProductos = async () => {
+            if (!terminoBusqueda.value.trim()) {
+                return inicializarDatos()
+            }
+
+            try {
+                const resultados = await ProductoService.buscarProductos(terminoBusqueda.value)
+                productos.value = resultados.map(p => ({
+                    id: p.productoId,
+                    nombre: p.nombre,
+                    precio: p.precio,
+                    descripcion: p.descripcion,
+                    disponibilidad: p.disponibilidad,
+                    imagen: p.imagenes?.[0] || 'https://placehold.co/150'
+                }))
+
+                if (resultados.length === 0) {
+                    Notificar.info('No se encontraron productos')
+                }
+            } catch (error) {
+                console.error('Error al buscar productos:', error)
+                Notificar.error('No se pudieron buscar los productos')
+            }
         }
 
-        Notificar.exito('Producto agregado correctamente', 3);
+        onMounted(() => {
+            inicializarDatos()
+        })
 
-      } catch (error) {
-        console.error('Error al agregar al carrito:', error);
-        Notificar.error('Error al cargar producto al carrito', 3);
-      }
-    };
-
-    const buscarProductos = async () => {
-      if (!terminoBusqueda.value.trim()) {
-        return inicializarDatos();
-      }
-      
-      try {
-        const resultados = await ProductoService.buscarProductos(terminoBusqueda.value);
-        productos.value = resultados.map(p => ({
-          id: p.productoId,
-          nombre: p.nombre,
-          precio: p.precio,
-          descripcion: p.descripcion,
-          disponibilidad: p.disponibilidad,
-          imagen: p.imagenes?.[0] || 'https://via.placeholder.com/150'
-        }));
-        
-        if (resultados.length === 0) {
-          Notificar.info('No se encontraron productos');
+        return {
+            usuarioLogueado,
+            productos,
+            categorias,
+            carritoItems,
+            carritoVisible,
+            loading,
+            carritoCount,
+            carritoTotal,
+            terminoBusqueda,
+            productoSeleccionado,
+            modalVisible,
+            inicializarDatos,
+            seleccionarCategoria,
+            verProducto,
+            agregarAlCarrito,
+            buscarProductos,
+            // Favoritos
+            isFavorito, // 🚨 Exportar la función computada
+            handleToggleFavorito // 🚨 Exportar el handler
         }
-      } catch (error) {
-        console.error('Error al buscar productos:', error);
-        Notificar.error('No se pudieron buscar los productos');
-      }
-    };
-
-    onMounted(() => {
-      inicializarDatos();
-    });
-
-    return {
-      usuarioLogueado,
-      productos,
-      categorias,
-      carrito,
-      carritoItems,
-      carritoVisible,
-      loading,
-      carritoCount,
-      carritoTotal,
-      terminoBusqueda,
-      productoSeleccionado,
-      modalVisible,
-      inicializarDatos,
-      seleccionarCategoria,
-      toggleCarrito,
-      verProducto,
-      agregarAlCarrito,
-      buscarProductos
-    };
-  }
-};
+    }
+}
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
