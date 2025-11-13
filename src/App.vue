@@ -15,7 +15,6 @@ import { ref } from 'vue'
 import HeaderNav from './components/HeaderNav.vue'
 import { useRoute } from 'vue-router';
 
-// Variables globales si las necesitás
 const usuarioLogueado = ref(null)
 const carritoItems = ref([])
 const carritoVisible = ref(false)

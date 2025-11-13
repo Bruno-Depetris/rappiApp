@@ -347,12 +347,13 @@ export default {
           this.$router.push('/vendedor/dashboard');
           break;
         case 'repartidor':
-          this.$router.push('/repartidor/pedidos');
+          this.$router.push('/RepartidorDashboard');
           break;
         case 'cliente':
         default:
           this.$router.push('/');
           break;
+          
       }
     },
 

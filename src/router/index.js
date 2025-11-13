@@ -9,6 +9,7 @@ import MisCompras from '../view/MisCompras.vue'
 import Carrito from '../view/Carrito.vue'
 import Favoritos from '../view/Favoritos.vue'
 import Login from '../view/Login.vue'
+import RepartidorDashboard from '../view/RepartidorDashboard.vue'
 
 const routes = [
     {
@@ -51,7 +52,12 @@ const routes = [
         path: '/login',
         name: 'Login',
         component: Login
-        // NOTA: No agregamos 'meta: { requiresHeader: true }' aquí.
+    },
+    {
+        path: '/RepartidorDashboard',
+        name: 'RepartidorDashboard',
+        component: RepartidorDashboard,
+        meta: { requiresHeader: true }
     },
     {
         path: '/categoria/:id',
