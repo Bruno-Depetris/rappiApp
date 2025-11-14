@@ -1,4 +1,3 @@
-import { getMockData, getMockById } from '../data/mockData.js';
 import { APP_CONFIG, ConfigUtils } from '../config/appConfig.js';
 
 const API_BASE = APP_CONFIG.API_BASE_URL;
@@ -11,128 +10,125 @@ function buildHeaders(key) {
   return headers;
 }
 
-export async function get(endpoint, key = null) {
-  // Si estamos en modo mock, usar datos locales
-  if (APP_CONFIG.USE_MOCK_DATA) {
-    ConfigUtils.showDebugLog(`🔧 Usando datos mock para GET ${endpoint}`);
-    
-    // Extraer la entidad del endpoint
-    const parts = endpoint.split('/');
-    const entity = parts[0];
-    const id = parts[1];
-    
-    if (id) {
-      return await getMockById(entity, id);
-    } else {
-      return await getMockData(entity);
-    }
-  }
+// Función para manejar errores de API de manera consistente
+function handleApiError(endpoint, method, error) {
+  console.error(`❌ Error en ${method} ${endpoint}:`, error);
   
-  // Intentar usar la API real como fallback
+  // Crear un error más descriptivo
+  const apiError = new Error(`Error de API: ${method} ${endpoint} falló`);
+  apiError.originalError = error;
+  apiError.endpoint = endpoint;
+  apiError.method = method;
+  
+  throw apiError;
+}
+
+export async function get(endpoint, key = null) {
+  ConfigUtils.showDebugLog(`🌐 Llamando API GET ${endpoint}`);
+  
   try {
     const headers = key ? buildHeaders(key) : {};
-    const res = await fetch(`${API_BASE}/${endpoint}`, { headers });
-    if (!res.ok) throw new Error(`GET ${endpoint} failed`);
-    return res.json();
-  } catch (error) {
-    console.warn(`⚠️ API falló para ${endpoint}, usando datos mock`, error);
-    // Fallback a datos mock si la API falla
-    const parts = endpoint.split('/');
-    const entity = parts[0];
-    const id = parts[1];
+    const response = await fetch(`${API_BASE}/${endpoint}`, { 
+      headers,
+      method: 'GET'
+    });
     
-    if (id) {
-      return await getMockById(entity, id);
-    } else {
-      return await getMockData(entity);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+    
+    const data = await response.json();
+    ConfigUtils.showDebugLog(`✅ GET ${endpoint} exitoso`, data);
+    return data;
+    
+  } catch (error) {
+    handleApiError(endpoint, 'GET', error);
   }
 }
 
 export async function post(endpoint, data, key = null) {
-  if (APP_CONFIG.USE_MOCK_DATA) {
-    ConfigUtils.showDebugLog(`🔧 Usando datos mock para POST ${endpoint}`, data);
-    const { createMockData } = await import('../data/mockData.js');
-    const entity = endpoint.split('/')[0];
-    return await createMockData(entity, data);
-  }
+  ConfigUtils.showDebugLog(`🌐 Llamando API POST ${endpoint}`, data);
   
   try {
-    const res = await fetch(`${API_BASE}/${endpoint}`, {
+    const response = await fetch(`${API_BASE}/${endpoint}`, {
       method: "POST",
       headers: buildHeaders(key),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(`POST ${endpoint} failed`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
-    // No parsear JSON si el backend no devuelve cuerpo
-    if (res.status === 204) return null;
+    // Si la respuesta no tiene contenido (204), retornar null
+    if (response.status === 204) {
+      ConfigUtils.showDebugLog(`✅ POST ${endpoint} exitoso (sin contenido)`);
+      return null;
+    }
 
-    return res.json();
+    const responseData = await response.json();
+    ConfigUtils.showDebugLog(`✅ POST ${endpoint} exitoso`, responseData);
+    return responseData;
+    
   } catch (error) {
-    console.warn(`⚠️ API falló para POST ${endpoint}, usando datos mock`, error);
-    const { createMockData } = await import('../data/mockData.js');
-    const entity = endpoint.split('/')[0];
-    return await createMockData(entity, data);
+    handleApiError(endpoint, 'POST', error);
   }
 }
 
 export async function put(endpoint, data, key = null) {
-  if (APP_CONFIG.USE_MOCK_DATA) {
-    ConfigUtils.showDebugLog(`🔧 Usando datos mock para PUT ${endpoint}`, data);
-    const { updateMockData } = await import('../data/mockData.js');
-    const parts = endpoint.split('/');
-    const entity = parts[0];
-    const id = parts[1];
-    return await updateMockData(entity, id, data);
-  }
+  ConfigUtils.showDebugLog(`🌐 Llamando API PUT ${endpoint}`, data);
   
   try {
-    const res = await fetch(`${API_BASE}/${endpoint}`, {
+    const response = await fetch(`${API_BASE}/${endpoint}`, {
       method: "PUT",
       headers: buildHeaders(key),
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) throw new Error(`PUT ${endpoint} failed`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
-    if (res.status === 204) return null;
+    // Si la respuesta no tiene contenido (204), retornar null
+    if (response.status === 204) {
+      ConfigUtils.showDebugLog(`✅ PUT ${endpoint} exitoso (sin contenido)`);
+      return null;
+    }
 
-    return res.json();
+    const responseData = await response.json();
+    ConfigUtils.showDebugLog(`✅ PUT ${endpoint} exitoso`, responseData);
+    return responseData;
+    
   } catch (error) {
-    console.warn(`⚠️ API falló para PUT ${endpoint}, usando datos mock`, error);
-    const { updateMockData } = await import('../data/mockData.js');
-    const parts = endpoint.split('/');
-    const entity = parts[0];
-    const id = parts[1];
-    return await updateMockData(entity, id, data);
+    handleApiError(endpoint, 'PUT', error);
   }
 }
 
 export async function del(endpoint, key = null) {
-  if (APP_CONFIG.USE_MOCK_DATA) {
-    ConfigUtils.showDebugLog(`🔧 Usando datos mock para DELETE ${endpoint}`);
-    const { deleteMockData } = await import('../data/mockData.js');
-    const parts = endpoint.split('/');
-    const entity = parts[0];
-    const id = parts[1];
-    return await deleteMockData(entity, id);
-  }
+  ConfigUtils.showDebugLog(`🌐 Llamando API DELETE ${endpoint}`);
   
   try {
     const headers = key ? buildHeaders(key) : {};
-    const res = await fetch(`${API_BASE}/${endpoint}`, { method: "DELETE", headers });
-    if (!res.ok) throw new Error(`DELETE ${endpoint} failed`);
+    const response = await fetch(`${API_BASE}/${endpoint}`, { 
+      method: "DELETE", 
+      headers 
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
 
-    if (res.status === 204) return null;
+    // Si la respuesta no tiene contenido (204), retornar null
+    if (response.status === 204) {
+      ConfigUtils.showDebugLog(`✅ DELETE ${endpoint} exitoso (sin contenido)`);
+      return null;
+    }
 
-    return res.json();
+    const responseData = await response.json();
+    ConfigUtils.showDebugLog(`✅ DELETE ${endpoint} exitoso`, responseData);
+    return responseData;
+    
   } catch (error) {
-    console.warn(`⚠️ API falló para DELETE ${endpoint}, usando datos mock`, error);
-    const { deleteMockData } = await import('../data/mockData.js');
-    const parts = endpoint.split('/');
-    const entity = parts[0];
-    const id = parts[1];
-    return await deleteMockData(entity, id);
+    handleApiError(endpoint, 'DELETE', error);
   }
 }

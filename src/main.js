@@ -2,6 +2,12 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
+// Importar las notificaciones y exponerlas globalmente
+import { Notificar } from './utils/notificaciones.js'
+
+// Exponer notificaciones en window para uso global
+window.Notificar = Notificar;
+
 // Importar utilidades de debug en desarrollo
 if (import.meta.env.DEV) {
   import('./utils/debug.js').then(({ Debug }) => {

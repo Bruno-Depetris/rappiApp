@@ -39,70 +39,75 @@ export const UsuarioService = {
   
   // Registro de usuario
   register: async (nombre, email, password, direccion) => {
-    const response = await http.post('auth/register', {
-      nombre: nombre,
-      email: email,
-      password: password,
-      direccion: direccion,
-      rol: 'Cliente', // Rol por defecto
-      estado: 'Activo'
-    });
-    
-    // Simular respuesta de autenticación exitosa
-    if (response) {
-      const token = 'mock_token_' + Math.random().toString(36);
-      const user = {
-        id: response.id,
-        nombre: response.nombre,
-        email: response.email,
-        rol: response.rol || 'Cliente',
-        estado: response.estado || 'Activo'
-      };
+    try {
+      console.log('🔍 Intentando registro con:', { nombre, email, direccion });
       
-      UsuarioService.guardarToken(token);
+      const response = await http.post('auth/register', {
+        nombre: nombre,
+        email: email,
+        password: password,
+        direccion: direccion,
+        rol: 'Cliente', // Rol por defecto
+        estado: 'Activo'
+      });
+      
+      console.log('✅ Respuesta de API registro:', response);
+      
+      // Verificar que la respuesta tenga el formato esperado
+      if (!response.access_token) {
+        throw new Error('La API no devolvió un token de acceso');
+      }
+      
+      if (!response.user) {
+        throw new Error('La API no devolvió información del usuario');
+      }
+      
+      const { access_token, user } = response;
+      
+      console.log('✅ Usuario registrado:', user);
+      console.log('🔑 Token recibido:', access_token.substring(0, 20) + '...');
+      
+      // Guardar en localStorage
+      UsuarioService.guardarToken(access_token);
       UsuarioService.guardarUsuario(user);
       
-      return { access_token: token, user: user };
+      return response;
+      
+    } catch (error) {
+      console.error('❌ Error en registro:', error);
+      throw new Error('Error al registrar usuario: ' + error.message);
     }
-    
-    return response;
   },
 
   // Login de usuario
   login: async (email, password) => {
     try {
-      console.log('🔍 Intentando login con:', { email, password });
+      console.log('🔍 Intentando login con:', { email });
       
-      // Buscar usuario en datos mock
-      const usuarios = await usuarioCrud.getAll();
-      console.log('🔍 Usuarios disponibles:', usuarios);
+      // Llamar a la API real para autenticación
+      const response = await http.post('auth/login', {
+        email: email,
+        password: password
+      });
       
-      let user = usuarios.find(u => u.email === email && u.password === password);
+      console.log('✅ Respuesta de API login:', response);
       
-      if (!user) {
-        console.log('❌ Usuario no encontrado, creando uno temporal...');
-        // Determinar rol basado en el email para testing
-        let rol = 'Cliente';
-        if (email.includes('admin')) rol = 'Administrador';
-        else if (email.includes('vendor') || email.includes('vendedor')) rol = 'Vendedor';
-        else if (email.includes('delivery') || email.includes('repartidor')) rol = 'Repartidor';
-        
-        user = {
-          id: Math.floor(Math.random() * 1000) + 100,
-          nombre: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
-          email: email,
-          rol: rol,
-          estado: 'Activo'
-        };
+      // Verificar que la respuesta tenga el formato esperado
+      if (!response.access_token) {
+        throw new Error('La API no devolvió un token de acceso');
       }
       
-      const token = 'mock_token_' + Math.random().toString(36);
+      if (!response.user) {
+        throw new Error('La API no devolvió información del usuario');
+      }
       
-      console.log('✅ Usuario encontrado/creado:', user);
-      console.log('🔑 Token generado:', token.substring(0, 20) + '...');
+      const { access_token, user } = response;
+      
+      console.log('✅ Usuario autenticado:', user);
+      console.log('🔑 Token recibido:', access_token.substring(0, 20) + '...');
       
       // Guardar en localStorage
-      UsuarioService.guardarToken(token);
+      UsuarioService.guardarToken(access_token);
       UsuarioService.guardarUsuario(user);
       
       // Verificar que se guardó correctamente
@@ -114,11 +119,11 @@ export const UsuarioService = {
       console.log('👤 Usuario guardado:', usuarioGuardado ? 'SÍ' : 'NO');
       console.log('🎯 Rol guardado:', usuarioGuardado?.rol);
       
-      return { access_token: token, user: user };
+      return response;
       
     } catch (error) {
       console.error('❌ Error en login:', error);
-      throw new Error('Credenciales incorrectas o error del servidor');
+      throw new Error('Credenciales incorrectas o error de conexión con la API');
     }
   },
 

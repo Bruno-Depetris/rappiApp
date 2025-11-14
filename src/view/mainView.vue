@@ -403,21 +403,32 @@ export default {
     
     async agregarAlCarrito(producto, cantidad = 1) {
       try {
+        console.log('🛒 Agregando producto al carrito:', producto.nombre, 'cantidad:', cantidad);
+        
         if (producto.disponibilidad === 0) {
           Notificar.error('Producto sin stock');
           return;
         }
         
-        await CarritoService.agregarItem(producto.productoId, cantidad);
+        const usuario = JSON.parse(localStorage.getItem('rappi_user'));
+        if (!usuario) {
+          Notificar.error('Usuario no encontrado');
+          return;
+        }
+        
+        // Usar la función correcta del servicio
+        await CarritoService.agregarProducto(usuario.id, producto.id, cantidad);
         await this.cargarCarrito();
         
         Notificar.exito(`${producto.nombre} agregado al carrito`);
+        console.log('✅ Producto agregado exitosamente');
         
       } catch (error) {
-        console.error('Error al agregar producto:', error);
+        console.error('❌ Error al agregar producto:', error);
         
+        // Fallback: agregar localmente si falla el servicio
         const itemExistente = this.carritoItems.find(item => 
-          item.productoId === producto.productoId
+          item.productoId === producto.id
         );
         
         if (itemExistente) {
@@ -425,10 +436,13 @@ export default {
         } else {
           this.carritoItems.push({
             id: Date.now(),
-            productoId: producto.productoId,
+            productoId: producto.id,
             producto: producto,
             cantidad: cantidad,
-            precio: producto.precio
+            precio: producto.precio,
+            precioUnitario: producto.precio,
+            nombre: producto.nombre,
+            nombreProducto: producto.nombre
           });
         }
         
@@ -443,12 +457,19 @@ export default {
     
     async removerDelCarrito(item) {
       try {
-        await CarritoService.eliminarItem(item.carritoItemId);
-        await this.cargarCarrito();
-        Notificar.exito('Producto eliminado del carrito');
-      } catch (error) {
-        console.error('Error al eliminar del carrito:', error);
+        console.log('🗑️ Removiendo item del carrito:', item);
         
+        // Usar el ID correcto del item
+        await CarritoService.eliminarItem(item.id);
+        await this.cargarCarrito();
+        
+        Notificar.exito('Producto eliminado del carrito');
+        console.log('✅ Item removido exitosamente');
+        
+      } catch (error) {
+        console.error('❌ Error al eliminar del carrito:', error);
+        
+        // Fallback: eliminar localmente
         const index = this.carritoItems.findIndex(i => i.id === item.id);
         if (index > -1) {
           this.carritoItems.splice(index, 1);

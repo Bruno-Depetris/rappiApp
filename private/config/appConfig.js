@@ -1,7 +1,7 @@
 // Configuración de la aplicación
 export const APP_CONFIG = {
   // Controla si usar datos mock o la API real
-  USE_MOCK_DATA: true, // Cambiar a false cuando la API esté completa
+  USE_MOCK_DATA: false, // FORZADO A FALSE - SOLO API REAL
   
   // URL de la API
   API_BASE_URL: "https://rapi-api-rest-production.up.railway.app/api",
@@ -94,5 +94,52 @@ export const ConfigUtils = {
     if (APP_CONFIG.DEV.SHOW_DEBUG_LOGS) {
       console.log('[DEBUG]', ...args);
     }
+  },
+
+  // Nuevas funciones para manejo de errores de API
+  handleApiError: (error, context = '') => {
+    const errorMessage = error.message || 'Error de conexión con la API';
+    const fullMessage = context ? `${context}: ${errorMessage}` : errorMessage;
+    
+    console.error('❌ Error de API:', {
+      message: fullMessage,
+      error: error,
+      context: context,
+      timestamp: new Date().toISOString()
+    });
+
+    // Si tenemos acceso a las notificaciones, mostrar error
+    if (typeof window !== 'undefined' && window.Notificar) {
+      window.Notificar.error(`Error de conexión: ${errorMessage}`, 6000);
+    }
+
+    return {
+      success: false,
+      error: true,
+      message: fullMessage,
+      originalError: error
+    };
+  },
+
+  showApiSuccess: (message) => {
+    if (typeof window !== 'undefined' && window.Notificar) {
+      window.Notificar.exito(message);
+    }
+    ConfigUtils.showDebugLog('✅ API Success:', message);
+  },
+
+  validateApiResponse: (response, expectedFields = []) => {
+    if (!response) {
+      throw new Error('Respuesta de API vacía');
+    }
+
+    // Verificar campos esperados si se especifican
+    for (const field of expectedFields) {
+      if (!(field in response)) {
+        throw new Error(`Campo requerido '${field}' no encontrado en la respuesta de la API`);
+      }
+    }
+
+    return true;
   }
 };
