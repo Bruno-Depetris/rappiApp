@@ -1,6 +1,35 @@
 import { createCrud } from '../api/crudFactory.js';
 
-const favoritoCrud = createCrud('favoritos');
+// Función auxiliar para obtener el token actual
+const obtenerToken = () => localStorage.getItem('rappi_token');
+
+// Función auxiliar para crear CRUD con token
+const crearCrudConToken = (entity) => {
+  return {
+    getAll: () => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getAll();
+    },
+    getById: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getById(id);
+    },
+    create: (data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).create(data);
+    },
+    update: (id, data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).update(id, data);
+    },
+    delete: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).delete(id);
+    }
+  };
+};
+
+const favoritoCrud = crearCrudConToken('favoritos');
 
 export const FavoritoService = {
   ...favoritoCrud,

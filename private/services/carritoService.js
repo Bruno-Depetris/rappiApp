@@ -1,7 +1,36 @@
 import { createCrud } from '../api/crudFactory.js';
 
-const carritoCrud = createCrud('carrito');
-const productoCrud = createCrud('productos');
+// Función auxiliar para obtener el token actual
+const obtenerToken = () => localStorage.getItem('rappi_token');
+
+// Función auxiliar para crear CRUD con token
+const crearCrudConToken = (entity) => {
+  return {
+    getAll: () => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getAll();
+    },
+    getById: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getById(id);
+    },
+    create: (data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).create(data);
+    },
+    update: (id, data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).update(id, data);
+    },
+    delete: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).delete(id);
+    }
+  };
+};
+
+const carritoCrud = crearCrudConToken('carrito');
+const productoCrud = crearCrudConToken('productos');
 
 export const CarritoService = {
   ...carritoCrud,
@@ -20,7 +49,8 @@ export const CarritoService = {
   agregarItem: async (productoId, cantidad) => {
     // Nota: Esto hace POST a /api/carrito pero necesitamos /api/carrito/items
     // Solución temporal: crear un nuevo crud para items
-    const itemsCrud = createCrud('carrito/items');
+    const token = obtenerToken();
+    const itemsCrud = createCrud('carrito/items', token);
     return await itemsCrud.create({
       ProductoId: productoId,
       Cantidad: cantidad
@@ -29,7 +59,8 @@ export const CarritoService = {
 
   // Actualizar cantidad de item 
   actualizarCantidad: async (itemId, cantidad) => {
-    const itemsCrud = createCrud('carrito/items');
+    const token = obtenerToken();
+    const itemsCrud = createCrud('carrito/items', token);
     return await itemsCrud.update(itemId, {
       Cantidad: cantidad
     });
@@ -37,7 +68,8 @@ export const CarritoService = {
 
   // Eliminar item
   eliminarItem: async (itemId) => {
-    const itemsCrud = createCrud('carrito/items');
+    const token = obtenerToken();
+    const itemsCrud = createCrud('carrito/items', token);
     return await itemsCrud.delete(itemId);
   },
 
@@ -45,7 +77,8 @@ export const CarritoService = {
 
   // Aplicar cupón
   aplicarCupon: async (codigo) => {
-    const cuponesCrud = createCrud('carrito/cupones');
+    const token = obtenerToken();
+    const cuponesCrud = createCrud('carrito/cupones', token);
     return await cuponesCrud.create({
       Codigo: codigo
     });
@@ -53,7 +86,8 @@ export const CarritoService = {
 
   // Remover cupón
   removerCupon: async (cuponId) => {
-    const cuponesCrud = createCrud('carrito/cupones');
+    const token = obtenerToken();
+    const cuponesCrud = createCrud('carrito/cupones', token);
     return await cuponesCrud.delete(cuponId);
   },
 

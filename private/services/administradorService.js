@@ -1,14 +1,43 @@
 import { createCrud } from '../api/crudFactory.js';
 import * as http from '../api/httpClient.js';
 
-const usuarioCrud = createCrud('usuarios');
-const negocioCrud = createCrud('negocios');
-const categoriaCrud = createCrud('categorias');
-const categoriaProductoCrud = createCrud('categorias-productos');
-const cuponCrud = createCrud('cupones');
-const metodoPagoCrud = createCrud('metodos-pago');
-const productoCrud = createCrud('productos');
-const pedidoCrud = createCrud('pedidos');
+// Función auxiliar para obtener el token actual
+const obtenerToken = () => localStorage.getItem('rappi_admin_token');
+
+// Función auxiliar para crear CRUD con token
+const crearCrudConToken = (entity) => {
+  return {
+    getAll: () => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getAll();
+    },
+    getById: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getById(id);
+    },
+    create: (data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).create(data);
+    },
+    update: (id, data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).update(id, data);
+    },
+    delete: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).delete(id);
+    }
+  };
+};
+
+const usuarioCrud = crearCrudConToken('usuarios');
+const negocioCrud = crearCrudConToken('negocios');
+const categoriaCrud = crearCrudConToken('categorias');
+const categoriaProductoCrud = crearCrudConToken('categorias-productos');
+const cuponCrud = crearCrudConToken('cupones');
+const metodoPagoCrud = crearCrudConToken('metodos-pago');
+const productoCrud = crearCrudConToken('productos');
+const pedidoCrud = crearCrudConToken('pedidos');
 
 export const AdministradorService = {
   // ==================== AUTENTICACIÓN ====================
@@ -132,12 +161,14 @@ export const AdministradorService = {
 
   // Aprobar vendedor
   aprobarVendedor: async (vendedorId) => {
-    return await http.put(`usuarios/aprobar-vendedor/${vendedorId}`, {});
+    const token = obtenerToken();
+    return await http.put(`usuarios/aprobar-vendedor/${vendedorId}`, {}, token);
   },
 
   // Rechazar vendedor
   rechazarVendedor: async (vendedorId, motivo) => {
-    return await http.put(`usuarios/rechazar-vendedor/${vendedorId}`, { motivo });
+    const token = obtenerToken();
+    return await http.put(`usuarios/rechazar-vendedor/${vendedorId}`, { motivo }, token);
   },
 
   // Obtener vendedores por estado

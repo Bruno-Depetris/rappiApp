@@ -1,9 +1,38 @@
 import { createCrud } from '../api/crudFactory.js';
 
-const carritoCrud = createCrud('carrito');
-const carritoItemCrud = createCrud('carrito/items');
-const carritoCuponCrud = createCrud('carrito/cupones');
-const productoCrud = createCrud('productos');
+// Función auxiliar para obtener el token actual
+const obtenerToken = () => localStorage.getItem('rappi_token');
+
+// Función auxiliar para crear CRUD con token
+const crearCrudConToken = (entity) => {
+  return {
+    getAll: () => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getAll();
+    },
+    getById: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).getById(id);
+    },
+    create: (data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).create(data);
+    },
+    update: (id, data) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).update(id, data);
+    },
+    delete: (id) => {
+      const token = obtenerToken();
+      return createCrud(entity, token).delete(id);
+    }
+  };
+};
+
+const carritoCrud = crearCrudConToken('carrito');
+const carritoItemCrud = crearCrudConToken('carrito/items');
+const carritoCuponCrud = crearCrudConToken('carrito/cupones');
+const productoCrud = crearCrudConToken('productos');
 
 
 export const CarritoService = {
