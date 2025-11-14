@@ -35,6 +35,19 @@ const productoCrud = crearCrudConToken('productos');
 export const CarritoService = {
   ...carritoCrud,
 
+  // Obtener MI carrito (para usuario autenticado)
+  getMiCarrito: async () => {
+    try {
+      const carritos = await carritoCrud.getAll();
+      const carritosArray = Array.isArray(carritos) ? carritos : [];
+      // Por ahora retornamos un carrito vacío por defecto
+      return carritosArray[0] || { items: [], cupones: [], total: 0 };
+    } catch (error) {
+      console.error('Error al obtener carrito:', error);
+      return { items: [], cupones: [], total: 0 };
+    }
+  },
+
   vaciarCarrito: async () => {
     return await carritoCrud.delete('vaciar');
   },

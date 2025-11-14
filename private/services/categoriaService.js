@@ -38,16 +38,30 @@ export const CategoriaService = {
 
   // Buscar categoría por nombre
   buscarPorNombre: async (nombre) => {
-    const categorias = await categoriaCrud.getAll();
-    return categorias.filter(cat => 
-      cat.nombre.toLowerCase().includes(nombre.toLowerCase())
-    );
+    try {
+      const categorias = await categoriaCrud.getAll();
+      const categoriasArray = Array.isArray(categorias) ? categorias : [];
+      return categoriasArray.filter(cat => 
+        cat.categoria && cat.categoria.toLowerCase().includes(nombre.toLowerCase())
+      );
+    } catch (error) {
+      console.error('Error al buscar categorías:', error);
+      return [];
+    }
   },
 
   // Obtener negocios por categoría
   getNegociosPorCategoria: async (categoriaId) => {
-    const negocios = await negocioCrud.getAll();
-    return negocios.filter(negocio => negocio.categoriaId === categoriaId);
+    try {
+      const negocios = await negocioCrud.getAll();
+      const negociosArray = Array.isArray(negocios) ? negocios : [];
+      return negociosArray.filter(negocio => 
+        negocio.categoria && negocio.categoria.id === categoriaId
+      );
+    } catch (error) {
+      console.error('Error al obtener negocios por categoría:', error);
+      return [];
+    }
   },
 
   // Obtener negocios activos por categoría

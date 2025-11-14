@@ -60,11 +60,11 @@
             <div v-if="carritoItems.length > 0" class="carrito-content">
               <div v-for="item in carritoItems" :key="item.id" class="carrito-item">
                 <div class="item-info">
-                  <h4>{{ item.producto.nombre }}</h4>
+                  <h4>{{ item.nombreProducto || item.producto?.nombre || 'Producto' }}</h4>
                   <p>Cantidad: {{ item.cantidad }}</p>
                 </div>
                 <div class="item-price">
-                  <p>${{ (item.precio * item.cantidad).toFixed(2) }}</p>
+                  <p>${{ (item.precioUnitario * item.cantidad).toFixed(2) }}</p>
                   <button @click="removerDelCarrito(item)" class="btn-remove">×</button>
                 </div>
               </div>

@@ -1,7 +1,6 @@
 <template>
   <div class="auth-container">
     <div class="auth-card">
-      <!-- Pestañas -->
       <div class="tabs">
         <button 
           :class="['tab', { active: modo === 'login' }]"
@@ -21,6 +20,16 @@
       <p class="subtitle">
         {{ modo === 'login' ? 'Inicia sesión en Rappi Clone' : 'Regístrate en Rappi Clone' }}
       </p>
+
+      <div v-if="modo === 'login'" class="test-users">
+        <p><strong>👤 Usuarios de prueba:</strong></p>
+        <div class="test-buttons">
+          <button type="button" @click="loginRapido('cliente@test.com')" class="btn-test">Cliente</button>
+          <button type="button" @click="loginRapido('vendedor@test.com')" class="btn-test">Vendedor</button>
+          <button type="button" @click="loginRapido('repartidor@test.com')" class="btn-test">Repartidor</button>
+          <button type="button" @click="loginRapido('admin@test.com')" class="btn-test">Admin</button>
+        </div>
+      </div>
 
       <!-- Mensaje de error -->
       <div v-if="error" class="error-message">
@@ -278,19 +287,25 @@ export default {
 
     redirigirSegunRol() {
       const rol = UsuarioService.obtenerRol();
+      console.log('🔍 Rol obtenido:', rol);
+      console.log('🔍 Usuario completo:', UsuarioService.obtenerUsuario());
 
       switch(rol) {
-        case 'admin':
+        case 'Administrador':
+          console.log('➡️ Redirigiendo a admin dashboard');
           this.$router.push('/admin/dashboard');
           break;
-        case 'vendedor':
+        case 'Vendedor':
+          console.log('➡️ Redirigiendo a vendedor dashboard');
           this.$router.push('/vendedor/dashboard');
           break;
-        case 'repartidor':
+        case 'Repartidor':
+          console.log('➡️ Redirigiendo a repartidor pedidos');
           this.$router.push('/repartidor/pedidos');
           break;
-        case 'cliente':
+        case 'Cliente':
         default:
+          console.log('➡️ Redirigiendo a home (cliente o default)');
           this.$router.push('/');
           break;
       }
@@ -308,6 +323,13 @@ export default {
         confirmPassword: '',
         direccion: ''
       };
+    },
+
+    // Login rápido para testing
+    loginRapido(email) {
+      this.loginForm.email = email;
+      this.loginForm.password = '123456'; // Password de prueba
+      this.handleLogin();
     }
   }
 }
@@ -468,5 +490,42 @@ form {
   to {
     opacity: 1;
   }
+}
+
+/* Usuarios de prueba */
+.test-users {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e9ecef;
+}
+
+.test-users p {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.test-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.btn-test {
+  padding: 8px 12px;
+  border: 1px solid #667eea;
+  background: white;
+  color: #667eea;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-test:hover {
+  background: #667eea;
+  color: white;
 }
 </style>

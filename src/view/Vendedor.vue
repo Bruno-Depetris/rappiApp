@@ -884,6 +884,11 @@ export default {
   
   async mounted() {
     await this.inicializarDatos();
+    
+    // Notificar que se están usando datos de desarrollo
+    setTimeout(() => {
+      this.mostrarNotificacion('💡 Usando datos de desarrollo - La aplicación está funcionando con datos de prueba', 'info');
+    }, 1000);
   },
   
   methods: {
@@ -924,25 +929,36 @@ export default {
           this.nombreNegocio = this.negocio.nombreNegocio;
           this.estadoNegocio = this.negocio.estado;
           this.nombreCategoria = this.negocio.categoria?.categoria || '';
+          console.log('✅ Negocio cargado exitosamente:', this.negocio.nombreNegocio);
+        } else {
+          console.log('ℹ️ No se encontró negocio para este vendedor');
         }
       } catch (error) {
         console.error('Error al cargar negocio:', error);
+        // Notificar al usuario sin mostrar error técnico
+        this.mostrarNotificacion('No se pudo cargar la información del negocio', 'warning');
       }
     },
     
     async cargarProductos() {
       try {
         this.productos = await AppServices.vendedor.getMisProductos(this.vendedorId);
+        console.log(`✅ ${this.productos.length} productos cargados`);
       } catch (error) {
         console.error('Error al cargar productos:', error);
+        this.productos = [];
+        this.mostrarNotificacion('No se pudieron cargar los productos', 'warning');
       }
     },
     
     async cargarPedidos() {
       try {
         this.pedidos = await AppServices.vendedor.getMisPedidos(this.vendedorId);
+        console.log(`✅ ${this.pedidos.length} pedidos cargados`);
       } catch (error) {
         console.error('Error al cargar pedidos:', error);
+        this.pedidos = [];
+        this.mostrarNotificacion('No se pudieron cargar los pedidos', 'warning');
       }
     },
     
@@ -1087,6 +1103,48 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+    
+    mostrarNotificacion(mensaje, tipo = 'info') {
+      // Método simple de notificación por consola y alert temporal
+      console.log(`${tipo.toUpperCase()}: ${mensaje}`);
+      
+      // Crear notificación visual simple
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 9999;
+        max-width: 300px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        ${tipo === 'warning' ? 'background-color: #ff9800;' : 
+          tipo === 'error' ? 'background-color: #f44336;' : 
+          'background-color: #4caf50;'}
+      `;
+      notification.textContent = mensaje;
+      
+      document.body.appendChild(notification);
+      
+      // Animar entrada
+      setTimeout(() => {
+        notification.style.opacity = '1';
+      }, 100);
+      
+      // Remover después de 3 segundos
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
     },
     
     logout() {

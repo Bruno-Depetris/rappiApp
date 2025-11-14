@@ -38,16 +38,40 @@ const vendedorCrud = crearCrudConToken('vendedores');
 export const VendedorService = {
   ...vendedorCrud,
   
+  // Método base para obtener vendedores
+  getVendedores: async () => {
+    try {
+      const usuarios = await usuarioCrud.getAll();
+      const usuariosArray = Array.isArray(usuarios) ? usuarios : [];
+      return usuariosArray.filter(u => u.rol === 'Vendedor');
+    } catch (error) {
+      console.error('Error al obtener vendedores:', error);
+      return [];
+    }
+  },
+  
   // Obtener vendedor por ID de usuario
   getVendedorById: async (usuarioId) => {
-    const vendedores = await VendedorService.getVendedores();
-    return vendedores.find(v => v.usuarioId === usuarioId);
+    try {
+      const vendedores = await VendedorService.getVendedores();
+      const vendedoresArray = Array.isArray(vendedores) ? vendedores : [];
+      return vendedoresArray.find(v => v.usuarioId === usuarioId);
+    } catch (error) {
+      console.error('Error al obtener vendedor:', error);
+      return null;
+    }
   },
 
   // Obtener todos los vendedores por estado
   getVendedoresByEstado: async (estado) => {
-    const vendedores = await usuarioCrud.getAll();
-    return vendedores.filter(v => v.rol === 'Vendedor' && v.estado === estado);
+    try {
+      const vendedores = await usuarioCrud.getAll();
+      const vendedoresArray = Array.isArray(vendedores) ? vendedores : [];
+      return vendedoresArray.filter(v => v.rol === 'Vendedor' && v.estado === estado);
+    } catch (error) {
+      console.error('Error al obtener vendedores por estado:', error);
+      return [];
+    }
   },
 
   // Obtener vendedores aprobados
@@ -63,8 +87,15 @@ export const VendedorService = {
   
   // Obtener MI negocio (para vendedor autenticado)
   getMiNegocio: async (vendedorId) => {
-    const negocios = await negocioCrud.getAll();
-    return negocios.find(n => n.vendedor?.usuarioId === vendedorId) || null;
+    try {
+      const negocios = await negocioCrud.getAll();
+      // Asegurar que negocios es un array
+      const negociosArray = Array.isArray(negocios) ? negocios : [];
+      return negociosArray.find(n => n.vendedor?.usuarioId === vendedorId) || null;
+    } catch (error) {
+      console.error('Error al obtener negocio:', error);
+      return null;
+    }
   },
 
   // Actualizar MI negocio
@@ -75,8 +106,14 @@ export const VendedorService = {
   
   // Obtener mis productos
   getMisProductos: async (vendedorId) => {
-    const productos = await productoCrud.getAll();
-    return productos.filter(p => p.vendedorId === vendedorId);
+    try {
+      const productos = await productoCrud.getAll();
+      const productosArray = Array.isArray(productos) ? productos : [];
+      return productosArray.filter(p => p.vendedorId === vendedorId);
+    } catch (error) {
+      console.error('Error al obtener productos:', error);
+      return [];
+    }
   },
 
   // Obtener productos disponibles (con stock)
@@ -115,11 +152,17 @@ export const VendedorService = {
   
   // Obtener pedidos que contienen mis productos
   getMisPedidos: async (vendedorId) => {
-    const pedidos = await pedidoCrud.getAll();
-    return pedidos.filter(pedido => {
-      if (!pedido.detalles) return false;
-      return pedido.detalles.some(detalle => detalle.vendedorId === vendedorId);
-    });
+    try {
+      const pedidos = await pedidoCrud.getAll();
+      const pedidosArray = Array.isArray(pedidos) ? pedidos : [];
+      return pedidosArray.filter(pedido => {
+        if (!pedido.detalles || !Array.isArray(pedido.detalles)) return false;
+        return pedido.detalles.some(detalle => detalle.vendedorId === vendedorId);
+      });
+    } catch (error) {
+      console.error('Error al obtener pedidos:', error);
+      return [];
+    }
   },
 
   // Obtener pedidos por estado
