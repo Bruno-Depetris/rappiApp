@@ -214,25 +214,52 @@ export default {
         this.success = '';
         this.cargando = true;
 
+        console.log('🚀 Iniciando proceso de login...');
+        console.log('📧 Email:', this.loginForm.email);
+
         if (!this.loginValido) {
           this.error = 'Por favor verifica los datos ingresados';
           return;
         }
 
-        await UsuarioService.login(
+        const result = await UsuarioService.login(
           this.loginForm.email,
           this.loginForm.password
         );
 
+        console.log('✅ Login service resultado:', result);
+
+        if (!result || !result.user) {
+          throw new Error('Respuesta de login inválida');
+        }
+
         this.success = '¡Inicio de sesión exitoso!';
 
+        // Verificar que los datos se guardaron correctamente
+        console.log('🔍 Verificando datos guardados...');
+        const tokenGuardado = UsuarioService.obtenerToken();
+        const usuarioGuardado = UsuarioService.obtenerUsuario();
+        const rolGuardado = UsuarioService.obtenerRol();
+
+        console.log('🔍 Token guardado:', tokenGuardado ? 'SÍ' : 'NO');
+        console.log('🔍 Usuario guardado:', usuarioGuardado ? 'SÍ' : 'NO');
+        console.log('🔍 Rol guardado:', rolGuardado);
+
+        if (!tokenGuardado || !usuarioGuardado || !rolGuardado) {
+          throw new Error('Error al guardar datos de sesión');
+        }
+
+        // Esperar un momento y luego redirigir
         setTimeout(() => {
+          console.log('⏰ Ejecutando redirección...');
           this.redirigirSegunRol();
-        }, 1000);
+        }, 1500);
 
       } catch (error) {
-        console.error('Error en login:', error);
-        this.error = 'Email o contraseña incorrectos';
+        console.error('❌ Error en login:', error);
+        this.error = error.message || 'Email o contraseña incorrectos';
+        // Limpiar datos en caso de error
+        UsuarioService.logout();
       } finally {
         this.cargando = false;
       }
@@ -287,8 +314,24 @@ export default {
 
     redirigirSegunRol() {
       const rol = UsuarioService.obtenerRol();
+      const usuario = UsuarioService.obtenerUsuario();
+      const estaAuth = UsuarioService.estaAutenticado();
+      
+      console.log('🔍 redirigirSegunRol() - Estado completo:');
       console.log('🔍 Rol obtenido:', rol);
-      console.log('🔍 Usuario completo:', UsuarioService.obtenerUsuario());
+      console.log('🔍 Usuario completo:', usuario);
+      console.log('🔍 Está autenticado:', estaAuth);
+      console.log('🔍 Token existe:', !!UsuarioService.obtenerToken());
+
+      if (!rol || !estaAuth) {
+        console.error('❌ No se pudo obtener el rol del usuario o no está autenticado');
+        this.error = 'Error en la autenticación. Intenta nuevamente.';
+        // Limpiar datos corruptos
+        UsuarioService.logout();
+        return;
+      }
+
+      console.log('🎯 Redirigiendo según rol:', rol);
 
       switch(rol) {
         case 'Administrador':

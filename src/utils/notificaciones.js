@@ -52,7 +52,8 @@ class NotificationManager {
 
   mostrar(tipo, mensaje, duracion = 4000) {
     if (!this.notyf) {
-      console.warn('Notyf no funciona o no esta bien declarado en el index principal');
+      console.warn('Notyf no está disponible, mostrando en consola:', tipo, mensaje);
+      console.log(`[${tipo.toUpperCase()}]: ${mensaje}`);
       return;
     }
 
@@ -71,8 +72,22 @@ class NotificationManager {
         break;
       case 'warning':
       case 'advertencia':
-        this.notyf.advertencia(mensaje);
-        break;      
+        this.notyf.open({
+          type: 'warning',
+          message: mensaje,
+          duration: duracion
+        });
+        break;
+      case 'info':
+        this.notyf.open({
+          type: 'info',
+          message: mensaje,
+          duration: duracion
+        });
+        break;
+      default:
+        this.notyf.success(mensaje);
+        break;
     }
   }
 
@@ -87,10 +102,12 @@ export const Notificar = {
   error: (mensaje, duracion) => notificationManager.mostrar('error', mensaje, duracion),
   advertencia: (mensaje, duracion) => notificationManager.mostrar('warning', mensaje, duracion),
   
-
-  
   mostrar: (tipo, mensaje, duracion) => notificationManager.mostrar(tipo, mensaje, duracion)
 };
 
+// Exportación adicional para compatibilidad
+export const mostrarNotificacion = (mensaje, tipo = 'info', duracion) => {
+  notificationManager.mostrar(tipo, mensaje, duracion);
+};
 
 export default Notificar;

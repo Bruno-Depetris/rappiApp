@@ -71,45 +71,54 @@ export const UsuarioService = {
   // Login de usuario
   login: async (email, password) => {
     try {
-      const response = await http.post('auth/login', {
-        email: email,
-        password: password
-      });
+      console.log('🔍 Intentando login con:', { email, password });
       
-      // Si estamos usando datos mock, simular login exitoso
-      if (response || true) { // Siempre exitoso en mock
-        const token = 'mock_token_' + Math.random().toString(36);
+      // Buscar usuario en datos mock
+      const usuarios = await usuarioCrud.getAll();
+      console.log('🔍 Usuarios disponibles:', usuarios);
+      
+      let user = usuarios.find(u => u.email === email && u.password === password);
+      
+      if (!user) {
+        console.log('❌ Usuario no encontrado, creando uno temporal...');
+        // Determinar rol basado en el email para testing
+        let rol = 'Cliente';
+        if (email.includes('admin')) rol = 'Administrador';
+        else if (email.includes('vendor') || email.includes('vendedor')) rol = 'Vendedor';
+        else if (email.includes('delivery') || email.includes('repartidor')) rol = 'Repartidor';
         
-        // Buscar usuario por email en datos mock o crear uno temporal
-        const usuarios = await usuarioCrud.getAll();
-        let user = usuarios.find(u => u.email === email);
-        
-        if (!user) {
-          // Determinar rol basado en el email para testing
-          let rol = 'Cliente';
-          if (email.includes('admin')) rol = 'Administrador';
-          else if (email.includes('vendor') || email.includes('vendedor')) rol = 'Vendedor';
-          else if (email.includes('delivery') || email.includes('repartidor')) rol = 'Repartidor';
-          
-          user = {
-            id: Math.floor(Math.random() * 1000) + 100,
-            nombre: email.split('@')[0],
-            email: email,
-            rol: rol,
-            estado: 'Activo'
-          };
-        }
-        
-        UsuarioService.guardarToken(token);
-        UsuarioService.guardarUsuario(user);
-        
-        return { access_token: token, user: user };
+        user = {
+          id: Math.floor(Math.random() * 1000) + 100,
+          nombre: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1),
+          email: email,
+          rol: rol,
+          estado: 'Activo'
+        };
       }
       
-      return response;
+      const token = 'mock_token_' + Math.random().toString(36);
+      
+      console.log('✅ Usuario encontrado/creado:', user);
+      console.log('🔑 Token generado:', token.substring(0, 20) + '...');
+      
+      // Guardar en localStorage
+      UsuarioService.guardarToken(token);
+      UsuarioService.guardarUsuario(user);
+      
+      // Verificar que se guardó correctamente
+      const tokenGuardado = UsuarioService.obtenerToken();
+      const usuarioGuardado = UsuarioService.obtenerUsuario();
+      
+      console.log('✅ Verificación post-login:');
+      console.log('🔑 Token guardado:', tokenGuardado ? 'SÍ' : 'NO');
+      console.log('👤 Usuario guardado:', usuarioGuardado ? 'SÍ' : 'NO');
+      console.log('🎯 Rol guardado:', usuarioGuardado?.rol);
+      
+      return { access_token: token, user: user };
+      
     } catch (error) {
-      console.error('Error en login:', error);
-      throw new Error('Credenciales incorrectas');
+      console.error('❌ Error en login:', error);
+      throw new Error('Credenciales incorrectas o error del servidor');
     }
   },
 
@@ -138,18 +147,18 @@ export const UsuarioService = {
 
   // Guardar usuario
   guardarUsuario: (usuario) => {
-    localStorage.setItem('rappi_usuario', JSON.stringify(usuario));
+    localStorage.setItem('rappi_user', JSON.stringify(usuario));
   },
 
   // Obtener usuario
   obtenerUsuario: () => {
-    const data = localStorage.getItem('rappi_usuario');
+    const data = localStorage.getItem('rappi_user');
     return data ? JSON.parse(data) : null;
   },
 
   // Eliminar usuario
   eliminarUsuario: () => {
-    localStorage.removeItem('rappi_usuario');
+    localStorage.removeItem('rappi_user');
   },
 
   // Verificar autenticación
@@ -162,7 +171,10 @@ export const UsuarioService = {
   // Obtener rol
   obtenerRol: () => {
     const usuario = UsuarioService.obtenerUsuario();
-    return usuario?.rol || null;
+    const rol = usuario?.rol || null;
+    console.log('🔍 obtenerRol() - Usuario:', usuario);
+    console.log('🔍 obtenerRol() - Rol:', rol);
+    return rol;
   },
 
   // Obtener usuario ID

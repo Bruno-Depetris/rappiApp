@@ -1,10 +1,11 @@
-// Datos mock para desarrollo mientras la API está en construcción
+// Datos mock actualizados según la estructura de la base de datos
 export const mockData = {
   usuarios: [
     {
       id: 1,
       nombre: "Juan Pérez",
       email: "juan@ejemplo.com",
+      password: "123456",
       rol: "Cliente",
       estado: "Activo",
       telefono: "555-1234",
@@ -14,8 +15,9 @@ export const mockData = {
       id: 2,
       nombre: "María García",
       email: "maria@vendor.com", 
+      password: "123456",
       rol: "Vendedor",
-      estado: "Aprobado",
+      estado: "Activo",
       telefono: "555-5678",
       direccion: "Av. Comercio 456, Ciudad"
     },
@@ -23,19 +25,145 @@ export const mockData = {
       id: 3,
       nombre: "Carlos López",
       email: "carlos@delivery.com",
+      password: "123456",
       rol: "Repartidor", 
       estado: "Activo",
       telefono: "555-9012",
-      vehiculo: "Motocicleta"
+      direccion: "Centro 789, Ciudad"
     },
     {
       id: 4,
       nombre: "Admin Sistema",
       email: "admin@sistema.com",
+      password: "123456",
       rol: "Administrador",
       estado: "Activo",
-      telefono: "555-0000"
+      telefono: "555-0000",
+      direccion: "Oficina Central"
+    },
+    {
+      id: 5,
+      nombre: "Cliente de Prueba",
+      email: "cliente@test.com",
+      password: "123456",
+      rol: "Cliente",
+      estado: "Activo",
+      telefono: "555-1111",
+      direccion: "Dirección del Cliente"
+    },
+    {
+      id: 6,
+      nombre: "Vendedor de Prueba",
+      email: "vendedor@test.com",
+      password: "123456",
+      rol: "Vendedor",
+      estado: "Activo",
+      telefono: "555-2222",
+      direccion: "Dirección del Vendedor"
+    },
+    {
+      id: 7,
+      nombre: "Repartidor de Prueba",
+      email: "repartidor@test.com",
+      password: "123456",
+      rol: "Repartidor",
+      estado: "Activo",
+      telefono: "555-3333",
+      direccion: "Dirección del Repartidor"
+    },
+    {
+      id: 8,
+      nombre: "Admin de Prueba",
+      email: "admin@test.com",
+      password: "123456",
+      rol: "Administrador",
+      estado: "Activo",
+      telefono: "555-4444",
+      direccion: "Dirección del Admin"
+    },
+    {
+      id: 5,
+      nombre: "Cliente de Prueba",
+      email: "cliente@test.com",
+      password: "123456",
+      rol: "Cliente",
+      estado: "Activo",
+      telefono: "555-1111",
+      direccion: "Dirección del Cliente"
+    },
+    {
+      id: 6,
+      nombre: "Vendedor de Prueba",
+      email: "vendedor@test.com",
+      password: "123456",
+      rol: "Vendedor",
+      estado: "Activo",
+      telefono: "555-2222",
+      direccion: "Dirección del Vendedor"
+    },
+    {
+      id: 7,
+      nombre: "Repartidor de Prueba",
+      email: "repartidor@test.com",
+      password: "123456",
+      rol: "Repartidor",
+      estado: "Activo",
+      telefono: "555-3333",
+      direccion: "Dirección del Repartidor"
+    },
+    {
+      id: 8,
+      nombre: "Admin de Prueba",
+      email: "admin@test.com",
+      password: "123456",
+      rol: "Administrador",
+      estado: "Activo",
+      telefono: "555-4444",
+      direccion: "Dirección del Admin"
     }
+  ],
+
+  administrador: [
+    {
+      id: 1,
+      usuarioId: 4,
+      usuario: "admin@sistema.com",
+      password: "admin123"
+    }
+  ],
+
+  vendedor: [
+    {
+      id: 1,
+      usuarioId: 2,
+      direccion: "Av. Comercio 456",
+      telefono: "555-5678",
+      estado: "Activo"
+    }
+  ],
+
+  repartidor: [
+    {
+      id: 1,
+      usuarioId: 3,
+      vehiculo: "Motocicleta",
+      estado: "Disponible",
+      ubicacionActual: { lat: -34.6037, lng: -58.3816 }
+    }
+  ],
+
+  categorias: [
+    { id: 1, categoria: "Comida Rápida", descripcion: "Restaurantes de comida rápida" },
+    { id: 2, categoria: "Café y Bebidas", descripcion: "Cafeterías y bebidas" },
+    { id: 3, categoria: "Postres", descripcion: "Heladerías y reposterías" },
+    { id: 4, categoria: "Comida Saludable", descripcion: "Opciones saludables y veganas" }
+  ],
+
+  categoriasProductos: [
+    { id: 1, nombre: "Pizzas", descripcion: "Pizzas tradicionales y especiales" },
+    { id: 2, nombre: "Bebidas Calientes", descripcion: "Café, té y bebidas calientes" },
+    { id: 3, nombre: "Repostería", descripcion: "Pasteles, croissants y dulces" },
+    { id: 4, nombre: "Bebidas Frías", descripcion: "Jugos, gaseosas y bebidas frías" }
   ],
 
   negocios: [
@@ -49,8 +177,8 @@ export const mockData = {
       estado: "Activo",
       horarioApertura: "18:00",
       horarioCierre: "23:00",
-      categoria: { id: 1, categoria: "Comida Rápida" },
-      vendedor: { usuarioId: 2, nombre: "María García" },
+      categoriaId: 1,
+      vendedorId: 1,
       imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23ff6b6b'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='16'%3EPizzería%3C/text%3E%3C/svg%3E"
     },
     {
@@ -63,8 +191,8 @@ export const mockData = {
       estado: "Activo",
       horarioApertura: "07:00",
       horarioCierre: "20:00",
-      categoria: { id: 2, categoria: "Café y Bebidas" },
-      vendedor: { usuarioId: 2, nombre: "María García" },
+      categoriaId: 2,
+      vendedorId: 1,
       imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23feca57'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='16'%3ECafetería%3C/text%3E%3C/svg%3E"
     }
   ],
@@ -76,11 +204,10 @@ export const mockData = {
       descripcion: "Pizza clásica con tomate, mozzarella y albahaca",
       precio: 12.99,
       disponibilidad: 15,
-      categoria: "Pizzas",
-      imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23ff6b6b'/%3E%3Ccircle cx='120' cy='100' r='80' fill='%23ff5722'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='14'%3E🍕%3C/text%3E%3C/svg%3E",
-      vendedorId: 2,
-      negocioId: 1,
-      estado: "Activo"
+      categoriaProductoId: 1,
+      imagenes: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23ff6b6b'/%3E%3Ccircle cx='120' cy='100' r='80' fill='%23ff5722'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='14'%3E🍕%3C/text%3E%3C/svg%3E",
+      vendedorId: 1,
+      isDeleted: false
     },
     {
       id: 2,
@@ -88,11 +215,10 @@ export const mockData = {
       descripcion: "Pizza con salsa de tomate, mozzarella y pepperoni",
       precio: 14.99,
       disponibilidad: 8,
-      categoria: "Pizzas",
-      imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23ff6b6b'/%3E%3Ccircle cx='120' cy='100' r='80' fill='%23d32f2f'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='14'%3E🍕%3C/text%3E%3C/svg%3E",
-      vendedorId: 2,
-      negocioId: 1,
-      estado: "Activo"
+      categoriaProductoId: 1,
+      imagenes: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23ff6b6b'/%3E%3Ccircle cx='120' cy='100' r='80' fill='%23d32f2f'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='14'%3E🍕%3C/text%3E%3C/svg%3E",
+      vendedorId: 1,
+      isDeleted: false
     },
     {
       id: 3,
@@ -100,23 +226,10 @@ export const mockData = {
       descripcion: "Café negro tradicional",
       precio: 3.50,
       disponibilidad: 50,
-      categoria: "Bebidas Calientes",
-      imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%236f4e37'/%3E%3Ccircle cx='120' cy='100' r='60' fill='%238b4513'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='16'%3E☕%3C/text%3E%3C/svg%3E",
-      vendedorId: 2,
-      negocioId: 2,
-      estado: "Activo"
-    },
-    {
-      id: 4,
-      nombre: "Croissant de Chocolate",
-      descripcion: "Croissant recién horneado relleno de chocolate",
-      precio: 4.25,
-      disponibilidad: 0,
-      categoria: "Repostería",
-      imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23feca57'/%3E%3Cpath d='M60 120 Q120 80 180 120 Q180 140 120 140 Q60 140 60 120' fill='%23daa520'/%3E%3Ctext x='50%25' y='75%25' text-anchor='middle' dy='.3em' fill='white' font-size='14'%3E🥐%3C/text%3E%3C/svg%3E",
-      vendedorId: 2,
-      negocioId: 2,
-      estado: "Activo"
+      categoriaProductoId: 2,
+      imagenes: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%236f4e37'/%3E%3Ccircle cx='120' cy='100' r='60' fill='%238b4513'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='16'%3E☕%3C/text%3E%3C/svg%3E",
+      vendedorId: 1,
+      isDeleted: false
     }
   ],
 
@@ -124,22 +237,61 @@ export const mockData = {
     {
       id: 1,
       usuarioId: 1,
-      items: [
-        {
-          id: 1,
-          productoId: 1,
-          nombreProducto: "Pizza Margherita",
-          cantidad: 1,
-          precioUnitario: 12.99,
-          subtotal: 12.99,
-          imagen: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='200'%3E%3Crect width='100%25' height='100%25' fill='%23ff6b6b'/%3E%3Ccircle cx='120' cy='100' r='80' fill='%23ff5722'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='white' font-size='14'%3E🍕%3C/text%3E%3C/svg%3E"
-        }
-      ],
-      cupones: [],
       subtotal: 12.99,
-      descuentos: 0,
+      totalDescuentos: 0,
       total: 12.99,
       fechaCreacion: new Date().toISOString()
+    }
+  ],
+
+  carritoItem: [
+    {
+      id: 1,
+      carritoId: 1,
+      productoId: 1,
+      cantidad: 1,
+      precioUnitario: 12.99,
+      subtotal: 12.99,
+      isDeleted: false
+    }
+  ],
+
+  cupon: [
+    {
+      id: 1,
+      codigo: "DESCUENTO10",
+      tipoDescuento: "Porcentaje",
+      descuento: 10,
+      fechaExpiracion: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      usoMaximo: 100,
+      usoActuales: 5,
+      isDeleted: false
+    }
+  ],
+
+  carritoCupon: [
+    {
+      id: 1,
+      carritoId: 1,
+      cuponId: 1,
+      descuentoAplicado: 1.30,
+      fechaAplicacion: new Date().toISOString(),
+      isDeleted: false
+    }
+  ],
+
+  metodoPago: [
+    {
+      id: 1,
+      metodo: "Efectivo"
+    },
+    {
+      id: 2, 
+      metodo: "Tarjeta de Crédito"
+    },
+    {
+      id: 3,
+      metodo: "Transferencia"
     }
   ],
 
@@ -147,69 +299,79 @@ export const mockData = {
     {
       id: 1,
       usuarioId: 1,
+      repartidorId: null,
+      metodoPagoId: 1,
+      subtotal: 27.98,
+      totalDescuentos: 0,
+      costoEnvio: 2.50,
+      total: 30.48,
       estado: "Pendiente",
-      total: 27.98,
-      fechaPedido: new Date().toISOString(),
+      fechaCreacion: new Date().toISOString(),
+      fechaEntrega: null,
       direccionEntrega: "Calle 123, Ciudad",
-      detalles: [
-        {
-          id: 1,
-          productoId: 1,
-          nombreProducto: "Pizza Margherita",
-          cantidad: 2,
-          precioUnitario: 12.99,
-          subtotal: 25.98,
-          vendedorId: 2
-        },
-        {
-          id: 2,
-          productoId: 3,
-          nombreProducto: "Café Americano",
-          cantidad: 1,
-          precioUnitario: 3.50,
-          subtotal: 3.50,
-          vendedorId: 2
-        }
-      ]
+      reseña: null,
+      isDeleted: false
+    }
+  ],
+
+  detallesPedido: [
+    {
+      id: 1,
+      pedidoId: 1,
+      productoId: 1,
+      cantidad: 2,
+      precioUnitario: 12.99,
+      subtotal: 25.98,
+      isDeleted: false
+    },
+    {
+      id: 2,
+      pedidoId: 1,
+      productoId: 3,
+      cantidad: 1,
+      precioUnitario: 3.50,
+      subtotal: 3.50,
+      isDeleted: false
+    }
+  ],
+
+  favoritos: [
+    {
+      id: 1,
+      usuarioId: 1,
+      productoId: 1,
+      isDeleted: false
+    }
+  ],
+
+  soporte: [
+    {
+      id: 1,
+      usuarioId: 1,
+      reclamo: "El pedido llegó frío",
+      isDeleted: false,
+      fechaCreacion: new Date().toISOString()
+    }
+  ],
+
+  favoritos: [
+    {
+      id: 1,
+      usuarioId: 1,
+      productoId: 1,
+      negocioId: null,
+      tipo: "producto",
+      fechaCreacion: new Date().toISOString(),
+      isDeleted: false
     },
     {
       id: 2,
       usuarioId: 1,
-      estado: "EnCamino",
-      total: 14.99,
-      fechaPedido: new Date(Date.now() - 3600000).toISOString(),
-      direccionEntrega: "Calle 123, Ciudad",
-      repartidorId: 3,
-      detalles: [
-        {
-          id: 3,
-          productoId: 2,
-          nombreProducto: "Pizza Pepperoni",
-          cantidad: 1,
-          precioUnitario: 14.99,
-          subtotal: 14.99,
-          vendedorId: 2
-        }
-      ]
-    }
-  ],
-
-  categorias: [
-    { id: 1, categoria: "Comida Rápida", descripcion: "Restaurantes de comida rápida" },
-    { id: 2, categoria: "Café y Bebidas", descripcion: "Cafeterías y bebidas" },
-    { id: 3, categoria: "Postres", descripcion: "Heladerías y reposterías" },
-    { id: 4, categoria: "Comida Saludable", descripcion: "Opciones saludables y veganas" }
-  ],
-
-  repartidores: [
-    {
-      id: 3,
-      usuarioId: 3,
-      vehiculo: "Motocicleta",
-      licencia: "ABC123",
-      estado: "Disponible",
-      ubicacionActual: { lat: -34.6037, lng: -58.3816 },
-      pedidoActual: 2
+      productoId: 3,
+      negocioId: null,
+      tipo: "producto",
+      fechaCreacion: new Date().toISOString(),
+      isDeleted: false
     }
   ]
 };

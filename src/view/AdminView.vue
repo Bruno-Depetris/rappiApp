@@ -16,28 +16,28 @@
         Dashboard
       </button>
       <button 
+        @click="seccionActiva = 'negocios'" 
+        :class="{ active: seccionActiva === 'negocios' }"
+      >
+        Negocios
+      </button>
+      <button 
+        @click="seccionActiva = 'categorias-negocios'" 
+        :class="{ active: seccionActiva === 'categorias-negocios' }"
+      >
+        Categorías Negocios
+      </button>
+      <button 
+        @click="seccionActiva = 'categorias-productos'" 
+        :class="{ active: seccionActiva === 'categorias-productos' }"
+      >
+        Categorías Productos
+      </button>
+      <button 
         @click="seccionActiva = 'usuarios'" 
         :class="{ active: seccionActiva === 'usuarios' }"
       >
         Usuarios
-      </button>
-      <button 
-        @click="seccionActiva = 'vendedores'" 
-        :class="{ active: seccionActiva === 'vendedores' }"
-      >
-        Vendedores
-      </button>
-      <button 
-        @click="seccionActiva = 'productos'" 
-        :class="{ active: seccionActiva === 'productos' }"
-      >
-        Productos
-      </button>
-      <button 
-        @click="seccionActiva = 'pedidos'" 
-        :class="{ active: seccionActiva === 'pedidos' }"
-      >
-        Pedidos
       </button>
     </nav>
 
@@ -88,6 +88,221 @@
               </button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Sección de Negocios -->
+      <div v-if="seccionActiva === 'negocios'" class="negocios-section">
+        <h2>Gestión de Negocios</h2>
+        <div class="section-header">
+          <div class="search-box">
+            <input v-model="busquedaNegocio" placeholder="Buscar negocio..." />
+          </div>
+        </div>
+        <div class="negocios-grid">
+          <div v-for="negocio in negociosFiltrados" :key="negocio.id" class="negocio-card">
+            <img :src="negocio.imagen" :alt="negocio.nombreNegocio" />
+            <div class="negocio-info">
+              <h4>{{ negocio.nombreNegocio }}</h4>
+              <p>{{ negocio.descripcion }}</p>
+              <p><strong>Vendedor:</strong> {{ negocio.vendedor?.nombre }}</p>
+              <p><strong>Estado:</strong> {{ negocio.estado }}</p>
+              <p><strong>Categoría:</strong> {{ negocio.categoria?.categoria }}</p>
+            </div>
+            <div class="negocio-acciones">
+              <button @click="cambiarEstadoNegocio(negocio)" 
+                      :class="negocio.estado === 'Activo' ? 'btn-suspender' : 'btn-activar'">
+                {{ negocio.estado === 'Activo' ? 'Suspender' : 'Activar' }}
+              </button>
+              <button @click="eliminarNegocio(negocio)" class="btn-eliminar">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección de Categorías de Negocios -->
+      <div v-if="seccionActiva === 'categorias-negocios'" class="categorias-negocios-section">
+        <h2>Categorías de Negocios</h2>
+        <div class="section-header">
+          <button @click="mostrarModalCategoriaNegocio = true" class="btn-primary">
+            + Nueva Categoría
+          </button>
+        </div>
+        <div class="categorias-table">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Negocios</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="categoria in categoriasNegocios" :key="categoria.id">
+                <td>{{ categoria.id }}</td>
+                <td>{{ categoria.categoria }}</td>
+                <td>{{ categoria.descripcion || 'Sin descripción' }}</td>
+                <td>{{ contarNegociosPorCategoria(categoria.id) }}</td>
+                <td class="acciones-td">
+                  <button @click="editarCategoriaNegocio(categoria)" class="btn-editar">
+                    Editar
+                  </button>
+                  <button @click="eliminarCategoriaNegocio(categoria)" class="btn-eliminar">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sección de Categorías de Productos -->
+      <div v-if="seccionActiva === 'categorias-productos'" class="categorias-productos-section">
+        <h2>Categorías de Productos</h2>
+        <div class="section-header">
+          <button @click="mostrarModalCategoriaProducto = true" class="btn-primary">
+            + Nueva Categoría de Producto
+          </button>
+        </div>
+        <div class="categorias-table">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Productos</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="categoria in categoriasProductos" :key="categoria.id">
+                <td>{{ categoria.id }}</td>
+                <td>{{ categoria.nombre }}</td>
+                <td>{{ categoria.descripcion || 'Sin descripción' }}</td>
+                <td>{{ contarProductosPorCategoria(categoria.nombre) }}</td>
+                <td class="acciones-td">
+                  <button @click="editarCategoriaProducto(categoria)" class="btn-editar">
+                    Editar
+                  </button>
+                  <button @click="eliminarCategoriaProducto(categoria)" class="btn-eliminar">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sección de Usuarios mejorada -->
+      <div v-if="seccionActiva === 'usuarios'" class="usuarios-section">
+        <h2>Gestión de Usuarios</h2>
+        <div class="section-header">
+          <div class="search-box">
+            <input v-model="busquedaUsuario" placeholder="Buscar usuario..." />
+          </div>
+          <select v-model="filtroRol" class="filter-select">
+            <option value="">Todos los roles</option>
+            <option value="Cliente">Clientes</option>
+            <option value="Vendedor">Vendedores</option>
+            <option value="Repartidor">Repartidores</option>
+            <option value="Administrador">Administradores</option>
+          </select>
+        </div>
+        <div class="usuarios-table">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="usuario in usuariosFiltrados" :key="usuario.id">
+                <td>{{ usuario.id }}</td>
+                <td>{{ usuario.nombre }}</td>
+                <td>{{ usuario.email }}</td>
+                <td>
+                  <select v-model="usuario.rol" @change="cambiarRolUsuario(usuario)" 
+                          class="rol-select">
+                    <option value="Cliente">Cliente</option>
+                    <option value="Vendedor">Vendedor</option>
+                    <option value="Repartidor">Repartidor</option>
+                    <option value="Administrador">Administrador</option>
+                  </select>
+                </td>
+                <td>
+                  <span :class="'estado-' + usuario.estado.toLowerCase()">
+                    {{ usuario.estado }}
+                  </span>
+                </td>
+                <td class="acciones-td">
+                  <button @click="cambiarEstadoUsuario(usuario)" 
+                          :class="usuario.estado === 'Activo' ? 'btn-suspender' : 'btn-activar'">
+                    {{ usuario.estado === 'Activo' ? 'Suspender' : 'Activar' }}
+                  </button>
+                  <button @click="eliminarUsuario(usuario)" class="btn-eliminar">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Modales -->
+      <div v-if="mostrarModalCategoriaNegocio" class="modal">
+        <div class="modal-content">
+          <h3>{{ categoriaEditando ? 'Editar' : 'Nueva' }} Categoría de Negocio</h3>
+          <form @submit.prevent="guardarCategoriaNegocio">
+            <div class="form-group">
+              <label>Nombre:</label>
+              <input v-model="formularioCategoriaNegocio.categoria" required />
+            </div>
+            <div class="form-group">
+              <label>Descripción:</label>
+              <textarea v-model="formularioCategoriaNegocio.descripcion"></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="btn-primary">Guardar</button>
+              <button type="button" @click="cerrarModalCategoriaNegocio" class="btn-secondary">
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div v-if="mostrarModalCategoriaProducto" class="modal">
+        <div class="modal-content">
+          <h3>{{ categoriaProductoEditando ? 'Editar' : 'Nueva' }} Categoría de Producto</h3>
+          <form @submit.prevent="guardarCategoriaProducto">
+            <div class="form-group">
+              <label>Nombre:</label>
+              <input v-model="formularioCategoriaProducto.nombre" required />
+            </div>
+            <div class="form-group">
+              <label>Descripción:</label>
+              <textarea v-model="formularioCategoriaProducto.descripcion"></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="submit" class="btn-primary">Guardar</button>
+              <button type="button" @click="cerrarModalCategoriaProducto" class="btn-secondary">
+                Cancelar
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -143,8 +358,48 @@ export default {
         ventas: { total: 0 }
       },
       usuarios: [],
-      solicitudesVendedor: []
+      solicitudesVendedor: [],
+      negocios: [],
+      categoriasNegocios: [],
+      categoriasProductos: [],
+      productos: [],
+      
+      // Filtros y búsquedas
+      busquedaNegocio: '',
+      busquedaUsuario: '',
+      filtroRol: '',
+      
+      // Modales y formularios
+      mostrarModalCategoriaNegocio: false,
+      mostrarModalCategoriaProducto: false,
+      categoriaEditando: null,
+      categoriaProductoEditando: null,
+      formularioCategoriaNegocio: {
+        categoria: '',
+        descripcion: ''
+      },
+      formularioCategoriaProducto: {
+        nombre: '',
+        descripcion: ''
+      }
     };
+  },
+  
+  computed: {
+    negociosFiltrados() {
+      return this.negocios.filter(negocio => 
+        negocio.nombreNegocio.toLowerCase().includes(this.busquedaNegocio.toLowerCase())
+      );
+    },
+    
+    usuariosFiltrados() {
+      return this.usuarios.filter(usuario => {
+        const coincideBusqueda = usuario.nombre.toLowerCase().includes(this.busquedaUsuario.toLowerCase()) ||
+                               usuario.email.toLowerCase().includes(this.busquedaUsuario.toLowerCase());
+        const coincideRol = !this.filtroRol || usuario.rol === this.filtroRol;
+        return coincideBusqueda && coincideRol;
+      });
+    }
   },
   
   async mounted() {
@@ -155,17 +410,36 @@ export default {
   methods: {
     async verificarAutenticacion() {
       if (!UsuarioService.estaAutenticado()) {
+        console.log('❌ No autenticado, redirigiendo a login');
         this.$router.push('/login');
         return;
       }
       
       const rol = UsuarioService.obtenerRol();
-      if (rol !== 'admin') {
-        this.$router.push('/');
+      const usuario = UsuarioService.obtenerUsuario();
+      
+      console.log('🔍 AdminView - Rol detectado:', rol);
+      console.log('🔍 AdminView - Usuario:', usuario);
+      
+      if (rol !== 'Administrador') {
+        console.log('❌ Acceso denegado a AdminView, rol:', rol);
+        // Redirigir según el rol correcto
+        switch(rol) {
+          case 'Vendedor':
+            this.$router.push('/vendedor/dashboard');
+            break;
+          case 'Repartidor':
+            this.$router.push('/repartidor/pedidos');
+            break;
+          case 'Cliente':
+          default:
+            this.$router.push('/');
+            break;
+        }
         return;
       }
       
-      const usuario = UsuarioService.obtenerUsuario();
+      console.log('✅ Acceso autorizado a AdminView');
       this.nombreAdmin = usuario?.nombre || 'Administrador';
     },
     
@@ -176,7 +450,11 @@ export default {
         await Promise.all([
           this.cargarEstadisticas(),
           this.cargarUsuarios(),
-          this.cargarSolicitudesVendedor()
+          this.cargarSolicitudesVendedor(),
+          this.cargarNegocios(),
+          this.cargarCategoriasNegocios(),
+          this.cargarCategoriasProductos(),
+          this.cargarProductos()
         ]);
         
       } catch (error) {
@@ -229,6 +507,253 @@ export default {
       }
     },
     
+    async cargarNegocios() {
+      try {
+        const { AppServices } = await import('../../private/services');
+        this.negocios = await AppServices.negocio.getAll();
+      } catch (error) {
+        console.error('Error al cargar negocios:', error);
+        this.negocios = [];
+      }
+    },
+    
+    async cargarCategoriasNegocios() {
+      try {
+        const { AppServices } = await import('../../private/services');
+        this.categoriasNegocios = await AppServices.categoria.getAll();
+      } catch (error) {
+        console.error('Error al cargar categorías de negocios:', error);
+        this.categoriasNegocios = [];
+      }
+    },
+    
+    async cargarCategoriasProductos() {
+      try {
+        const categorias = ['Pizzas', 'Bebidas Calientes', 'Repostería', 'Comida Rápida', 'Ensaladas', 'Postres'];
+        this.categoriasProductos = categorias.map((cat, index) => ({
+          id: index + 1,
+          nombre: cat,
+          descripcion: `Categoría de ${cat}`
+        }));
+      } catch (error) {
+        console.error('Error al cargar categorías de productos:', error);
+        this.categoriasProductos = [];
+      }
+    },
+    
+    async cargarProductos() {
+      try {
+        const { AppServices } = await import('../../private/services');
+        this.productos = await AppServices.producto.getAll();
+      } catch (error) {
+        console.error('Error al cargar productos:', error);
+        this.productos = [];
+      }
+    },
+    
+    contarNegociosPorCategoria(categoriaId) {
+      return this.negocios.filter(n => n.categoria?.id === categoriaId).length;
+    },
+    
+    contarProductosPorCategoria(categoriaNombre) {
+      return this.productos.filter(p => p.categoria === categoriaNombre).length;
+    },
+    
+    // Métodos de gestión de negocios
+    async cambiarEstadoNegocio(negocio) {
+      try {
+        const nuevoEstado = negocio.estado === 'Activo' ? 'Suspendido' : 'Activo';
+        const { AppServices } = await import('../../private/services');
+        await AppServices.negocio.update(negocio.id, { estado: nuevoEstado });
+        negocio.estado = nuevoEstado;
+        this.mostrarNotificacion(`Negocio ${nuevoEstado.toLowerCase()} exitosamente`, 'success');
+      } catch (error) {
+        console.error('Error al cambiar estado del negocio:', error);
+        this.mostrarNotificacion('Error al cambiar el estado del negocio', 'error');
+      }
+    },
+    
+    async eliminarNegocio(negocio) {
+      if (!confirm(`¿Está seguro de eliminar el negocio "${negocio.nombreNegocio}"?`)) return;
+      
+      try {
+        const { AppServices } = await import('../../private/services');
+        await AppServices.negocio.delete(negocio.id);
+        this.negocios = this.negocios.filter(n => n.id !== negocio.id);
+        this.mostrarNotificacion('Negocio eliminado exitosamente', 'success');
+      } catch (error) {
+        console.error('Error al eliminar negocio:', error);
+        this.mostrarNotificacion('Error al eliminar el negocio', 'error');
+      }
+    },
+    
+    // Métodos de gestión de usuarios
+    async cambiarRolUsuario(usuario) {
+      try {
+        const { AppServices } = await import('../../private/services');
+        await AppServices.usuario.update(usuario.id, { rol: usuario.rol });
+        this.mostrarNotificacion(`Rol cambiado a ${usuario.rol} exitosamente`, 'success');
+      } catch (error) {
+        console.error('Error al cambiar rol:', error);
+        this.mostrarNotificacion('Error al cambiar el rol del usuario', 'error');
+      }
+    },
+    
+    async cambiarEstadoUsuario(usuario) {
+      try {
+        const nuevoEstado = usuario.estado === 'Activo' ? 'Suspendido' : 'Activo';
+        const { AppServices } = await import('../../private/services');
+        await AppServices.usuario.update(usuario.id, { estado: nuevoEstado });
+        usuario.estado = nuevoEstado;
+        this.mostrarNotificacion(`Usuario ${nuevoEstado.toLowerCase()} exitosamente`, 'success');
+      } catch (error) {
+        console.error('Error al cambiar estado del usuario:', error);
+        this.mostrarNotificacion('Error al cambiar el estado del usuario', 'error');
+      }
+    },
+    
+    async eliminarUsuario(usuario) {
+      if (!confirm(`¿Está seguro de eliminar al usuario "${usuario.nombre}"?`)) return;
+      
+      try {
+        const { AppServices } = await import('../../private/services');
+        await AppServices.usuario.delete(usuario.id);
+        this.usuarios = this.usuarios.filter(u => u.id !== usuario.id);
+        this.mostrarNotificacion('Usuario eliminado exitosamente', 'success');
+      } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        this.mostrarNotificacion('Error al eliminar el usuario', 'error');
+      }
+    },
+    
+    // Métodos de categorías de negocios
+    editarCategoriaNegocio(categoria) {
+      this.categoriaEditando = categoria;
+      this.formularioCategoriaNegocio = { ...categoria };
+      this.mostrarModalCategoriaNegocio = true;
+    },
+    
+    async guardarCategoriaNegocio() {
+      try {
+        const { AppServices } = await import('../../private/services');
+        
+        if (this.categoriaEditando) {
+          await AppServices.categoria.update(this.categoriaEditando.id, this.formularioCategoriaNegocio);
+          const index = this.categoriasNegocios.findIndex(c => c.id === this.categoriaEditando.id);
+          if (index !== -1) {
+            this.categoriasNegocios[index] = { ...this.categoriaEditando, ...this.formularioCategoriaNegocio };
+          }
+        } else {
+          const nueva = await AppServices.categoria.create(this.formularioCategoriaNegocio);
+          this.categoriasNegocios.push(nueva);
+        }
+        
+        this.cerrarModalCategoriaNegocio();
+        this.mostrarNotificacion('Categoría guardada exitosamente', 'success');
+      } catch (error) {
+        console.error('Error al guardar categoría:', error);
+        this.mostrarNotificacion('Error al guardar la categoría', 'error');
+      }
+    },
+    
+    async eliminarCategoriaNegocio(categoria) {
+      if (!confirm(`¿Está seguro de eliminar la categoría "${categoria.categoria}"?`)) return;
+      
+      try {
+        const { AppServices } = await import('../../private/services');
+        await AppServices.categoria.delete(categoria.id);
+        this.categoriasNegocios = this.categoriasNegocios.filter(c => c.id !== categoria.id);
+        this.mostrarNotificacion('Categoría eliminada exitosamente', 'success');
+      } catch (error) {
+        console.error('Error al eliminar categoría:', error);
+        this.mostrarNotificacion('Error al eliminar la categoría', 'error');
+      }
+    },
+    
+    cerrarModalCategoriaNegocio() {
+      this.mostrarModalCategoriaNegocio = false;
+      this.categoriaEditando = null;
+      this.formularioCategoriaNegocio = { categoria: '', descripcion: '' };
+    },
+    
+    // Métodos de categorías de productos
+    editarCategoriaProducto(categoria) {
+      this.categoriaProductoEditando = categoria;
+      this.formularioCategoriaProducto = { ...categoria };
+      this.mostrarModalCategoriaProducto = true;
+    },
+    
+    async guardarCategoriaProducto() {
+      try {
+        if (this.categoriaProductoEditando) {
+          const index = this.categoriasProductos.findIndex(c => c.id === this.categoriaProductoEditando.id);
+          if (index !== -1) {
+            this.categoriasProductos[index] = { ...this.categoriaProductoEditando, ...this.formularioCategoriaProducto };
+          }
+        } else {
+          const nuevaId = Math.max(...this.categoriasProductos.map(c => c.id)) + 1;
+          this.categoriasProductos.push({
+            id: nuevaId,
+            ...this.formularioCategoriaProducto
+          });
+        }
+        
+        this.cerrarModalCategoriaProducto();
+        this.mostrarNotificacion('Categoría de producto guardada exitosamente', 'success');
+      } catch (error) {
+        console.error('Error al guardar categoría de producto:', error);
+        this.mostrarNotificacion('Error al guardar la categoría de producto', 'error');
+      }
+    },
+    
+    async eliminarCategoriaProducto(categoria) {
+      if (!confirm(`¿Está seguro de eliminar la categoría "${categoria.nombre}"?`)) return;
+      
+      this.categoriasProductos = this.categoriasProductos.filter(c => c.id !== categoria.id);
+      this.mostrarNotificacion('Categoría de producto eliminada exitosamente', 'success');
+    },
+    
+    cerrarModalCategoriaProducto() {
+      this.mostrarModalCategoriaProducto = false;
+      this.categoriaProductoEditando = null;
+      this.formularioCategoriaProducto = { nombre: '', descripcion: '' };
+    },
+    
+    mostrarNotificacion(mensaje, tipo = 'info') {
+      // Método simple de notificación
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 9999;
+        max-width: 300px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        ${tipo === 'error' ? 'background-color: #f44336;' : 
+          tipo === 'warning' ? 'background-color: #ff9800;' : 
+          'background-color: #4caf50;'}
+      `;
+      notification.textContent = mensaje;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.style.opacity = '1', 100);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    },
+
     async aprobarVendedor(solicitud) {
       try {
         await AdministradorService.aprobarVendedor(solicitud.vendedor.usuarioId);

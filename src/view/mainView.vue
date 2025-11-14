@@ -38,10 +38,27 @@
 
       <div class="nav-right">
         <div class="container-user">
-          <i class="material-icons">person</i>
-          <div class="user-info">
-            <p>{{ usuarioLogueado }}</p>
-            <small>{{ userRole }}</small>
+          <button @click="toggleUserMenu" class="user-button">
+            <i class="material-icons">person</i>
+            <div class="user-info">
+              <p>{{ usuarioLogueado }}</p>
+              <small>{{ userRole }}</small>
+            </div>
+          </button>
+          
+          <div v-if="userMenuVisible" class="user-menu">
+            <button @click="$router.push('/mis-pedidos'); userMenuVisible = false">
+              <span class="material-icons">receipt_long</span>
+              Mis Pedidos
+            </button>
+            <button @click="$router.push('/favoritos'); userMenuVisible = false">
+              <span class="material-icons">favorite</span>
+              Mis Favoritos
+            </button>
+            <button @click="logout">
+              <span class="material-icons">exit_to_app</span>
+              Cerrar Sesión
+            </button>
           </div>
         </div>
 
@@ -75,7 +92,7 @@
               
               <div class="carrito-actions">
                 <button @click="vaciarCarrito" class="btn-secondary">Vaciar</button>
-                <button @click="crearPedido" class="btn-primary">Pedir</button>
+                <button @click="irAlCheckout" class="btn-primary">Finalizar Pedido</button>
               </div>
             </div>
             <div v-else class="carrito-empty">
@@ -83,11 +100,6 @@
             </div>
           </div>
         </div>
-
-        <button @click="logout" class="btn-logout">
-          <span class="material-icons">exit_to_app</span>
-          Salir
-        </button>
       </div>
     </nav>
 
@@ -112,6 +124,16 @@
             <div class="producto-image">
               <img :src="producto.imagenes || 'https://via.placeholder.com/300x200'" :alt="producto.nombre">
               <div v-if="producto.disponibilidad === 0" class="out-of-stock">Sin Stock</div>
+              <button 
+                @click="toggleFavorito(producto)" 
+                class="btn-favorito"
+                :class="{ active: producto.esFavorito }"
+                title="Agregar/Remover de favoritos"
+              >
+                <span class="material-icons">
+                  {{ producto.esFavorito ? 'favorite' : 'favorite_border' }}
+                </span>
+              </button>
             </div>
             
             <div class="producto-info">
@@ -182,7 +204,8 @@
 
 <script>
 import { UsuarioService, ProductoService, CarritoService, CategoriaService, PedidoService } from '../../private/services';
-import { Notificar } from "../utils/notificaciones";
+import { FavoritoService } from '../../private/services/favoritoService.js';
+import { Notificar } from "../utils/notificaciones.js";
 
 export default {
   name: 'MainView',
@@ -194,6 +217,7 @@ export default {
       categorias: [],
       carritoItems: [],
       carritoVisible: false,
+      userMenuVisible: false,
       loading: true,
       busqueda: '',
       filtroCategoria: '',
@@ -232,9 +256,44 @@ export default {
     }
   },
   
+  watch: {
+    // Observar cambios en la ruta para refrescar carrito
+    '$route'(to, from) {
+      console.log('🔄 Cambio de ruta detectado:', from.path, '->', to.path);
+      
+      // Si venimos de checkout, refrescar carrito
+      if (from.path === '/checkout' && to.path === '/') {
+        console.log('🔄 Regresando de checkout, refrescando carrito...');
+        setTimeout(() => {
+          this.cargarCarrito();
+        }, 500);
+      }
+    }
+  },
+  
   async mounted() {
+    console.log('📱 MainView montado');
     await this.verificarAutenticacion();
     await this.inicializarDatos();
+    
+    // Escuchar evento de carrito actualizado
+    window.addEventListener('carritoActualizado', this.refrescarCarrito);
+    
+    // Escuchar cambios de ruta para refrescar carrito
+    this.$router.afterEach((to, from) => {
+      // Refrescar carrito cuando se regrese de checkout
+      if (from.path === '/checkout' && to.path === '/') {
+        console.log('🔄 Regresando de checkout, refrescando carrito...');
+        setTimeout(() => {
+          this.cargarCarrito();
+        }, 500);
+      }
+    });
+  },
+  
+  beforeUnmount() {
+    // Limpiar listener
+    window.removeEventListener('carritoActualizado', this.refrescarCarrito);
   },
   
   methods: {
@@ -258,6 +317,9 @@ export default {
           this.cargarCategorias(),
           this.cargarCarrito()
         ]);
+
+        // Cargar estado de favoritos después de cargar productos
+        await this.cargarEstadoFavoritos();
         
         Notificar.exito('¡Bienvenido a RappiApp!');
         
@@ -289,10 +351,29 @@ export default {
     
     async cargarCarrito() {
       try {
-        const carrito = await CarritoService.getMiCarrito();
-        this.carritoItems = carrito?.items || [];
+        const usuario = JSON.parse(localStorage.getItem('rappi_user'));
+        console.log('🛒 Cargando carrito para usuario:', usuario?.id);
+        
+        if (usuario) {
+          const carrito = await CarritoService.getMiCarrito(usuario.id);
+          console.log('🛒 Carrito obtenido:', carrito);
+          
+          // Asegurar que items sea un array
+          this.carritoItems = Array.isArray(carrito.items) ? carrito.items : [];
+          
+          // Mapear correctamente los datos para la vista
+          this.carritoItems = this.carritoItems.map(item => ({
+            ...item,
+            precio: item.precioUnitario || item.precio || 0,
+            nombre: item.nombreProducto || item.nombre || 'Producto'
+          }));
+          
+          console.log('🛒 Items del carrito procesados:', this.carritoItems.length);
+        } else {
+          this.carritoItems = [];
+        }
       } catch (error) {
-        console.error('Error al cargar carrito:', error);
+        console.error('❌ Error al cargar carrito:', error);
         this.carritoItems = [];
       }
     },
@@ -302,6 +383,10 @@ export default {
     
     toggleCarrito() {
       this.carritoVisible = !this.carritoVisible;
+      // Cerrar menú de usuario si está abierto
+      if (this.carritoVisible) {
+        this.userMenuVisible = false;
+      }
     },
     
     verProducto(producto) {
@@ -372,15 +457,31 @@ export default {
       }
     },
     
+    async refrescarCarrito() {
+      console.log('🔄 Refrescando carrito...');
+      await this.cargarCarrito();
+    },
+    
     async vaciarCarrito() {
       try {
-        await CarritoService.vaciarCarrito();
-        this.carritoItems = [];
-        Notificar.exito('Carrito vaciado');
+        const usuario = JSON.parse(localStorage.getItem('rappi_user'));
+        console.log('🧹 Vaciando carrito para usuario:', usuario?.id);
+        
+        if (usuario) {
+          const carrito = await CarritoService.getMiCarrito(usuario.id);
+          await CarritoService.vaciarCarrito(carrito.id);
+          
+          // Actualizar vista local inmediatamente
+          this.carritoItems = [];
+          
+          Notificar.exito('Carrito vaciado');
+          console.log('✅ Carrito vaciado exitosamente');
+        }
       } catch (error) {
-        console.error('Error al vaciar carrito:', error);
+        console.error('❌ Error al vaciar carrito:', error);
+        // Limpiar vista local aunque haya error
         this.carritoItems = [];
-        Notificar.exito('Carrito vaciado (modo local)');
+        Notificar.error('Error al vaciar el carrito');
       }
     },
     
@@ -406,6 +507,57 @@ export default {
       } catch (error) {
         console.error('Error al crear pedido:', error);
         Notificar.error('Error al crear el pedido');
+      }
+    },
+
+    toggleUserMenu() {
+      this.userMenuVisible = !this.userMenuVisible;
+      // Cerrar carrito si está abierto
+      if (this.userMenuVisible) {
+        this.carritoVisible = false;
+      }
+    },
+
+    async irAlCheckout() {
+      if (this.carritoItems.length === 0) {
+        Notificar.error('El carrito está vacío');
+        return;
+      }
+      
+      console.log('🛒 Ir al checkout con', this.carritoItems.length, 'items');
+      this.carritoVisible = false;
+      this.$router.push('/checkout');
+    },
+
+    async toggleFavorito(producto) {
+      try {
+        const usuario = JSON.parse(localStorage.getItem('rappi_user'));
+        
+        const esFavorito = await FavoritoService.toggleProductoFavorito(usuario.id, producto.productoId);
+        
+        // Actualizar el estado local
+        producto.esFavorito = esFavorito;
+        
+        if (esFavorito) {
+          Notificar.exito(`${producto.nombre} agregado a favoritos`);
+        } else {
+          Notificar.exito(`${producto.nombre} removido de favoritos`);
+        }
+      } catch (error) {
+        console.error('Error al toggle favorito:', error);
+        Notificar.error('Error al gestionar favorito');
+      }
+    },
+
+    async cargarEstadoFavoritos() {
+      try {
+        const usuario = JSON.parse(localStorage.getItem('rappi_user'));
+        
+        for (const producto of this.productos) {
+          producto.esFavorito = await FavoritoService.esProductoFavorito(usuario.id, producto.productoId);
+        }
+      } catch (error) {
+        console.error('Error al cargar estado de favoritos:', error);
       }
     },
     
@@ -511,6 +663,10 @@ export default {
 }
 
 .container-user {
+  position: relative;
+}
+
+.user-button {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -519,6 +675,11 @@ export default {
   border-radius: 25px;
   border: none;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.user-button:hover {
+  background: #e9ecef;
 }
 
 .user-info p {
@@ -530,6 +691,77 @@ export default {
 .user-info small {
   color: #666;
   text-transform: capitalize;
+}
+
+.user-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 180px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.user-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.user-menu button:hover {
+  background-color: #f8f9fa;
+}
+
+.user-menu button .material-icons {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.user-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.user-menu button {
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.3s ease;
+}
+
+.user-menu button:hover {
+  background: #f8f9fa;
+}
+
+.user-menu button .material-icons {
+  font-size: 18px;
 }
 
 .container-carrito {
@@ -794,6 +1026,42 @@ export default {
   border-radius: 4px;
   font-size: 11px;
   font-weight: bold;
+}
+
+.btn-favorito {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-favorito:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+}
+
+.btn-favorito .material-icons {
+  color: #ccc;
+  transition: color 0.3s ease;
+  font-size: 1.2rem;
+}
+
+.btn-favorito.active .material-icons {
+  color: #e74c3c;
+}
+
+.btn-favorito:not(.active):hover .material-icons {
+  color: #e74c3c;
 }
 
 .producto-info {

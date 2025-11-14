@@ -30,109 +30,235 @@ const crearCrudConToken = (entity) => {
 };
 
 const carritoCrud = crearCrudConToken('carrito');
+const carritoItemCrud = crearCrudConToken('carritoItem');
+const carritoCuponCrud = crearCrudConToken('carritoCupon');
 const productoCrud = crearCrudConToken('productos');
 
 export const CarritoService = {
   ...carritoCrud,
 
   // Obtener MI carrito (para usuario autenticado)
-  getMiCarrito: async () => {
+  getMiCarrito: async (usuarioId = null) => {
     try {
       const carritos = await carritoCrud.getAll();
       const carritosArray = Array.isArray(carritos) ? carritos : [];
-      // Por ahora retornamos un carrito vacío por defecto
-      return carritosArray[0] || { items: [], cupones: [], total: 0 };
+      
+      // Buscar carrito del usuario
+      let carrito = carritosArray.find(c => c.usuarioId === usuarioId);
+      
+      if (!carrito) {
+        // Crear carrito nuevo si no existe
+        carrito = await CarritoService.crearCarritoVacio(usuarioId);
+      }
+      
+      // Obtener items del carrito
+      const items = await CarritoService.getItemsCarrito(carrito.id);
+      const cupones = await CarritoService.getCuponesCarrito(carrito.id);
+      
+      return {
+        ...carrito,
+        items,
+        cupones
+      };
     } catch (error) {
       console.error('Error al obtener carrito:', error);
       return { items: [], cupones: [], total: 0 };
     }
   },
 
-  vaciarCarrito: async () => {
-    return await carritoCrud.delete('vaciar');
+  // Crear carrito vacío
+  crearCarritoVacio: async (usuarioId) => {
+    const nuevoCarrito = {
+      usuarioId,
+      subtotal: 0,
+      totalDescuentos: 0,
+      total: 0,
+      fechaCreacion: new Date().toISOString()
+    };
+    return await carritoCrud.create(nuevoCarrito);
   },
-  
+
   // Obtener items del carrito
-  getItems: async () => {
-    const carrito = await CarritoService.getMiCarrito();
-    return carrito.items || [];
+  getItemsCarrito: async (carritoId) => {
+    try {
+      const items = await carritoItemCrud.getAll();
+      const itemsCarrito = items.filter(item => 
+        item.carritoId === carritoId && !item.isDeleted
+      );
+      
+      // Enriquecer con datos del producto
+      const productos = await productoCrud.getAll();
+      
+      return itemsCarrito.map(item => {
+        const producto = productos.find(p => p.id === item.productoId);
+        return {
+          ...item,
+          nombreProducto: producto?.nombre || 'Producto no encontrado',
+          imagen: producto?.imagenes || '',
+          descripcion: producto?.descripcion || ''
+        };
+      });
+    } catch (error) {
+      console.error('Error al obtener items del carrito:', error);
+      return [];
+    }
   },
 
-  // Agregar item al carrito (POST /api/carrito/items)
-  agregarItem: async (productoId, cantidad) => {
-    // Nota: Esto hace POST a /api/carrito pero necesitamos /api/carrito/items
-    // Solución temporal: crear un nuevo crud para items
-    const token = obtenerToken();
-    const itemsCrud = createCrud('carrito/items', token);
-    return await itemsCrud.create({
-      ProductoId: productoId,
-      Cantidad: cantidad
-    });
+  // Obtener cupones del carrito
+  getCuponesCarrito: async (carritoId) => {
+    try {
+      const carritoCupones = await carritoCuponCrud.getAll();
+      return carritoCupones.filter(cc => 
+        cc.carritoId === carritoId && !cc.isDeleted
+      );
+    } catch (error) {
+      console.error('Error al obtener cupones del carrito:', error);
+      return [];
+    }
   },
 
-  // Actualizar cantidad de item 
-  actualizarCantidad: async (itemId, cantidad) => {
-    const token = obtenerToken();
-    const itemsCrud = createCrud('carrito/items', token);
-    return await itemsCrud.update(itemId, {
-      Cantidad: cantidad
-    });
+  // Agregar producto al carrito
+  agregarProducto: async (usuarioId, productoId, cantidad = 1) => {
+    try {
+      // Obtener o crear carrito
+      const carrito = await CarritoService.getMiCarrito(usuarioId);
+      
+      // Verificar si el producto ya está en el carrito
+      const itemExistente = carrito.items.find(item => item.productoId === productoId);
+      
+      if (itemExistente) {
+        // Actualizar cantidad
+        return await CarritoService.actualizarCantidadItem(
+          itemExistente.id, 
+          itemExistente.cantidad + cantidad
+        );
+      } else {
+        // Agregar nuevo item
+        const producto = await productoCrud.getById(productoId);
+        const nuevoItem = {
+          carritoId: carrito.id,
+          productoId,
+          cantidad,
+          precioUnitario: producto.precio,
+          subtotal: producto.precio * cantidad,
+          isDeleted: false
+        };
+        
+        const itemCreado = await carritoItemCrud.create(nuevoItem);
+        await CarritoService.recalcularTotales(carrito.id);
+        return itemCreado;
+      }
+    } catch (error) {
+      console.error('Error al agregar producto al carrito:', error);
+      throw error;
+    }
   },
 
-  // Eliminar item
+  // Actualizar cantidad de item
+  actualizarCantidadItem: async (itemId, nuevaCantidad) => {
+    try {
+      const item = await carritoItemCrud.getById(itemId);
+      const nuevoSubtotal = item.precioUnitario * nuevaCantidad;
+      
+      const itemActualizado = await carritoItemCrud.update(itemId, {
+        cantidad: nuevaCantidad,
+        subtotal: nuevoSubtotal
+      });
+      
+      await CarritoService.recalcularTotales(item.carritoId);
+      return itemActualizado;
+    } catch (error) {
+      console.error('Error al actualizar cantidad:', error);
+      throw error;
+    }
+  },
+
+  // Eliminar item del carrito
   eliminarItem: async (itemId) => {
-    const token = obtenerToken();
-    const itemsCrud = createCrud('carrito/items', token);
-    return await itemsCrud.delete(itemId);
+    try {
+      const item = await carritoItemCrud.getById(itemId);
+      await carritoItemCrud.update(itemId, { isDeleted: true });
+      await CarritoService.recalcularTotales(item.carritoId);
+    } catch (error) {
+      console.error('Error al eliminar item:', error);
+      throw error;
+    }
   },
-
-  // ==================== GESTIÓN DE CUPONES ====================
 
   // Aplicar cupón
-  aplicarCupon: async (codigo) => {
-    const token = obtenerToken();
-    const cuponesCrud = createCrud('carrito/cupones', token);
-    return await cuponesCrud.create({
-      Codigo: codigo
-    });
+  aplicarCupon: async (carritoId, cuponId, descuentoAplicado) => {
+    try {
+      const carritoCupon = {
+        carritoId,
+        cuponId,
+        descuentoAplicado,
+        fechaAplicacion: new Date().toISOString(),
+        isDeleted: false
+      };
+      
+      const resultado = await carritoCuponCrud.create(carritoCupon);
+      await CarritoService.recalcularTotales(carritoId);
+      return resultado;
+    } catch (error) {
+      console.error('Error al aplicar cupón:', error);
+      throw error;
+    }
   },
 
-  // Remover cupón
-  removerCupon: async (cuponId) => {
-    const token = obtenerToken();
-    const cuponesCrud = createCrud('carrito/cupones', token);
-    return await cuponesCrud.delete(cuponId);
+  // Recalcular totales del carrito
+  recalcularTotales: async (carritoId) => {
+    try {
+      const items = await CarritoService.getItemsCarrito(carritoId);
+      const cupones = await CarritoService.getCuponesCarrito(carritoId);
+      
+      const subtotal = items.reduce((sum, item) => sum + item.subtotal, 0);
+      const totalDescuentos = cupones.reduce((sum, cupon) => sum + cupon.descuentoAplicado, 0);
+      const total = subtotal - totalDescuentos;
+      
+      await carritoCrud.update(carritoId, {
+        subtotal,
+        totalDescuentos,
+        total
+      });
+      
+      return { subtotal, totalDescuentos, total };
+    } catch (error) {
+      console.error('Error al recalcular totales:', error);
+      throw error;
+    }
   },
 
-  // Obtener cupones aplicados
-  getCupones: async () => {
-    const carrito = await CarritoService.getMiCarrito();
-    return carrito.cupones || [];
+  // Vaciar carrito
+  vaciarCarrito: async (carritoId) => {
+    try {
+      const items = await CarritoService.getItemsCarrito(carritoId);
+      
+      // Marcar todos los items como eliminados
+      for (const item of items) {
+        await carritoItemCrud.update(item.id, { isDeleted: true });
+      }
+      
+      // Limpiar cupones también
+      const cupones = await CarritoService.getCuponesCarrito(carritoId);
+      for (const cupon of cupones) {
+        await carritoCuponCrud.update(cupon.id, { isDeleted: true });
+      }
+      
+      // Resetear totales
+      await carritoCrud.update(carritoId, {
+        subtotal: 0,
+        totalDescuentos: 0,
+        total: 0
+      });
+      
+    } catch (error) {
+      console.error('Error al vaciar carrito:', error);
+      throw error;
+    }
   },
 
-  
-  calcularSubtotalItem: (item) => {
-    return item.cantidad * item.precioUnitario;
-  },
-
-  calcularSubtotal: (items) => {
-    return items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
-  },
-
-  calcularDescuentos: (cupones) => {
-    return cupones.reduce((sum, cupon) => sum + (cupon.descuentoAplicado || 0), 0);
-  },
-
-  // Calcular total del carrito
-  calcularTotal: (items, cupones = []) => {
-    const subtotal = CarritoService.calcularSubtotal(items);
-    const descuentos = CarritoService.calcularDescuentos(cupones);
-    return subtotal - descuentos;
-  },
-
-  // Contar items en el carrito
-  contarItems: (items) => {
-    return items.reduce((sum, item) => sum + item.cantidad, 0);
-  },
-
+  // Obtener cantidad total de items
+  obtenerCantidadTotal: (items) => {
+    return items.reduce((total, item) => total + item.cantidad, 0);
+  }
 };

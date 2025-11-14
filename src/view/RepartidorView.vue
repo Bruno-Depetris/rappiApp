@@ -4,10 +4,35 @@
       <h1>Panel de Repartidor</h1>
       <div class="usuario-info">
         <span>{{ nombreRepartidor }}</span>
-        <span class="estado" :class="estadoRepartidor">{{ estadoRepartidor }}</span>
+        <button @click="toggleEstado" :class="'btn-estado-' + estadoRepartidor">
+          {{ estadoRepartidor === 'Disponible' ? '🟢 Disponible' : '🔴 No Disponible' }}
+        </button>
         <button @click="logout" class="btn-logout">Cerrar Sesión</button>
       </div>
     </header>
+
+    <!-- Notificaciones de nuevos pedidos -->
+    <div v-if="nuevospedidos.length > 0" class="notificaciones">
+      <div v-for="pedido in nuevospedidos" :key="'notif-' + pedido.id" class="notificacion-nueva">
+        <div class="notif-header">
+          <h4>🚨 ¡Nuevo Pedido Disponible!</h4>
+          <button @click="cerrarNotificacion(pedido.id)" class="btn-cerrar">×</button>
+        </div>
+        <div class="notif-body">
+          <p><strong>Pedido #{{ pedido.id }}</strong></p>
+          <p>💰 Total: ${{ pedido.total }}</p>
+          <p>📍 Dirección: {{ pedido.direccionEntrega }}</p>
+          <div class="notif-actions">
+            <button @click="tomarPedido(pedido)" class="btn-tomar">
+              Tomar Envío
+            </button>
+            <button @click="rechazarPedido(pedido.id)" class="btn-rechazar">
+              Rechazar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="estadisticas">
       <div class="stat-card">
@@ -34,6 +59,12 @@
         :class="{ active: vistaActiva === 'disponibles' }"
       >
         Pedidos Disponibles ({{ pedidosDisponibles.length }})
+      </button>
+      <button 
+        @click="vistaActiva = 'enproceso'" 
+        :class="{ active: vistaActiva === 'enproceso' }"
+      >
+        En Proceso ({{ pedidosEnProceso.length }})
       </button>
       <button 
         @click="vistaActiva = 'encamino'" 
@@ -186,18 +217,22 @@ export default {
       loading: true,
       nombreRepartidor: '',
       repartidorId: null,
-      estadoRepartidor: 'disponible',
+      estadoRepartidor: 'Disponible', // 'Disponible' o 'NoDisponible'
       vistaActiva: 'disponibles',
       maxPedidosSimultaneos: 3,
       
       pedidosDisponibles: [],
+      pedidosEnProceso: [], // Pedidos tomados pero no despachados
       pedidosEnCamino: [],
       pedidosEntregados: [],
+      
+      nuevospedidos: [], // Notificaciones de nuevos pedidos
       
       mostrarModalRuta: false,
       pedidoSeleccionado: null,
       
-      actualizacionInterval: null
+      actualizacionInterval: null,
+      notificationSound: null // Para sonido de notificación
     };
   },
   
@@ -365,9 +400,184 @@ export default {
       return estados[estado] || estado;
     },
     
+    // Métodos para gestión de estado del repartidor
+    toggleEstado() {
+      this.estadoRepartidor = this.estadoRepartidor === 'Disponible' ? 'NoDisponible' : 'Disponible';
+      this.actualizarEstadoEnServidor();
+      
+      if (this.estadoRepartidor === 'NoDisponible') {
+        this.nuevospedidos = []; // Limpiar notificaciones si no está disponible
+      }
+    },
+    
+    async actualizarEstadoEnServidor() {
+      try {
+        // Aquí se actualizaría el estado en el servidor
+        console.log('Estado actualizado:', this.estadoRepartidor);
+        this.mostrarNotificacion(
+          `Estado cambiado a ${this.estadoRepartidor === 'Disponible' ? 'Disponible' : 'No Disponible'}`,
+          'info'
+        );
+      } catch (error) {
+        console.error('Error al actualizar estado:', error);
+      }
+    },
+    
+    // Métodos para gestión de notificaciones de pedidos
+    async verificarNuevosPedidos() {
+      if (this.estadoRepartidor !== 'Disponible' || !this.puedeTomarMasPedidos) {
+        return;
+      }
+      
+      try {
+        const { AppServices } = await import('../../private/services');
+        const todosPedidos = await AppServices.pedido.getAll();
+        
+        const pedidosPendientes = todosPedidos.filter(p => 
+          p.estado === 'Pendiente' && 
+          !this.pedidosDisponibles.find(existing => existing.id === p.id) &&
+          !this.nuevospedidos.find(existing => existing.id === p.id)
+        );
+        
+        // Agregar nuevos pedidos a notificaciones
+        pedidosPendientes.forEach(pedido => {
+          this.nuevospedidos.push(pedido);
+          this.reproducirSonidoNotificacion();
+          this.mostrarNotificacion(`🚨 Nuevo pedido disponible #${pedido.id} - $${pedido.total}`, 'info');
+        });
+        
+      } catch (error) {
+        console.error('Error al verificar nuevos pedidos:', error);
+      }
+    },
+    
+    async tomarPedido(pedido) {
+      if (!this.puedeTomarMasPedidos) {
+        this.mostrarNotificacion('Has alcanzado el límite de pedidos simultáneos', 'warning');
+        return;
+      }
+      
+      try {
+        const { AppServices } = await import('../../private/services');
+        
+        // Cambiar estado del pedido a "EnProceso" y asignar repartidor
+        await AppServices.pedido.update(pedido.id, {
+          estado: 'EnProceso',
+          repartidorId: this.repartidorId,
+          fechaTomado: new Date().toISOString()
+        });
+        
+        // Mover pedido a "en proceso"
+        this.pedidosEnProceso.push({...pedido, estado: 'EnProceso'});
+        
+        // Remover de disponibles y notificaciones
+        this.pedidosDisponibles = this.pedidosDisponibles.filter(p => p.id !== pedido.id);
+        this.cerrarNotificacion(pedido.id);
+        
+        this.mostrarNotificacion(`¡Pedido #${pedido.id} tomado exitosamente!`, 'success');
+        
+        await this.cargarPedidos(); // Recargar para sincronizar
+        
+      } catch (error) {
+        console.error('Error al tomar pedido:', error);
+        this.mostrarNotificacion('Error al tomar el pedido', 'error');
+      }
+    },
+    
+    async pedidoTomado(pedido) {
+      try {
+        const { AppServices } = await import('../../private/services');
+        
+        await AppServices.pedido.update(pedido.id, {
+          estado: 'EnCamino',
+          fechaDespachado: new Date().toISOString()
+        });
+        
+        // Mover de "en proceso" a "en camino"
+        this.pedidosEnProceso = this.pedidosEnProceso.filter(p => p.id !== pedido.id);
+        this.pedidosEnCamino.push({...pedido, estado: 'EnCamino'});
+        
+        this.mostrarNotificacion(`Pedido #${pedido.id} despachado`, 'success');
+        
+      } catch (error) {
+        console.error('Error al despachar pedido:', error);
+        this.mostrarNotificacion('Error al despachar el pedido', 'error');
+      }
+    },
+    
+    rechazarPedido(pedidoId) {
+      this.nuevospedidos = this.nuevospedidos.filter(p => p.id !== pedidoId);
+      this.mostrarNotificacion('Pedido rechazado', 'info');
+    },
+    
+    cerrarNotificacion(pedidoId) {
+      this.nuevospedidos = this.nuevospedidos.filter(p => p.id !== pedidoId);
+    },
+    
+    reproducirSonidoNotificacion() {
+      // Crear sonido de notificación simple
+      if ('AudioContext' in window || 'webkitAudioContext' in window) {
+        try {
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = 800;
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.5);
+        } catch (error) {
+          console.log('No se pudo reproducir el sonido de notificación');
+        }
+      }
+    },
+    
+    mostrarNotificacion(mensaje, tipo = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: bold;
+        z-index: 9999;
+        max-width: 300px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        ${tipo === 'error' ? 'background-color: #f44336;' : 
+          tipo === 'warning' ? 'background-color: #ff9800;' : 
+          tipo === 'success' ? 'background-color: #4caf50;' :
+          'background-color: #2196f3;'}
+      `;
+      notification.textContent = mensaje;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => notification.style.opacity = '1', 100);
+      
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }, 4000);
+    },
+    
     iniciarActualizacionAutomatica() {
       this.actualizacionInterval = setInterval(() => {
         this.cargarPedidos();
+        this.verificarNuevosPedidos(); // Verificar nuevos pedidos cada 30 segundos
       }, 30000);
     },
     
@@ -411,6 +621,135 @@ export default {
 
 .usuario-info span {
   font-weight: 500;
+}
+
+.btn-estado-Disponible {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+.btn-estado-NoDisponible {
+  background: #f44336;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.3s;
+}
+
+/* Notificaciones de nuevos pedidos */
+.notificaciones {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 350px;
+}
+
+.notificacion-nueva {
+  background: #ff5722;
+  color: white;
+  border-radius: 12px;
+  margin-bottom: 15px;
+  box-shadow: 0 4px 20px rgba(255, 87, 34, 0.4);
+  animation: slideIn 0.3s ease;
+  border: 2px solid #ff3d00;
+}
+
+.notif-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 15px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.notif-header h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.btn-cerrar:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.notif-body {
+  padding: 10px 15px 15px;
+}
+
+.notif-body p {
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.notif-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-tomar {
+  flex: 1;
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-tomar:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+}
+
+.btn-rechazar {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 10px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-rechazar:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .estado {
